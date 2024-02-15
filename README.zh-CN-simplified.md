@@ -33,16 +33,16 @@
 
 ## ✅ TODO List
 
-- [ ] Inference code (Coming soon)
-- [ ] Training code (Coming soon)
+- [ ] Inference code (马上就来)
+- [ ] Training code (马上就来)
 
-## 🤗 Online demo
+## 🤗 在线体验
 
-Go to [Huggingface](https://huggingface.co/spaces/xuelunshen/gim-online) to quickly try our model online.
+去 [Huggingface](https://huggingface.co/spaces/xuelunshen/gim-online) 在线快速体验我们模型的效果
 
-## 📌 Citation
+## 📌 引用
 
-If our code helps your research, please give a citation to our paper ❤️ Thank you very much.
+如果我们的代码对你的研究有帮助, 请给我们的论文一个引用吧 ❤️ 多谢啦.
 
 ```bibtex
 @inproceedings{
