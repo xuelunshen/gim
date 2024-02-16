@@ -33,8 +33,7 @@
 
 ## ✅ TODO List
 
-- [ ] Inference code (Coming soon)
-- [ ] Training code (Coming soon)
+- [ ] Code release (around February 23rd)
 
 ## 🤗 Online demo
 
