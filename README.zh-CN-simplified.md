@@ -32,7 +32,7 @@
 
 ## ✅ TODO List
 
-- [ ] 代码和 HuggingFace demo 大概在2月27日左右公布 (因为代码审查)
+- [ ] 代码和 HuggingFace demo 大概在2月30日左右公布 (审查已经结束，正在走流程)
 
 ## 🤗 在线体验
 

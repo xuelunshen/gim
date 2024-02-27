@@ -32,7 +32,7 @@
 
 ## ✅ TODO List
 
-- [ ] Code and HuggingFace demo will come out around February 27th (as code review)
+- [ ] Code and HuggingFace demo will come out around February 30th (review completed, now in process)
 
 ## 🤗 Online demo
 
