@@ -32,11 +32,73 @@
 
 ## ✅ TODO List
 
-- [ ] Code and HuggingFace demo will come out around February 30th (review completed, now in process)
+- [x] Inference code
+- [ ] Training code
 
 ## 🤗 Online demo
 
 Go to [Huggingface](https://huggingface.co/spaces/xuelunshen/gim-online) to quickly try our model online.
+
+## ⚙️ Environment
+
+My code running environment is:
+- `GeForce RTX 3090`
+- `Ubuntu 20.04.3`
+- `Python (3.8.10)`
+- `Pytorch 1.10.2 (py3.8_cuda11.3_cudnn8.2.0_0)`
+
+For the specific environment, please run the following command to install `anaconda`
+```bash
+conda env create -f environment.yml
+```
+If the above command fails to install the environment directly, please refer to the clean environment in `environment.txt` to install each package.
+
+## 🔨 Usage
+
+Clone our repository, then run the following command
+```bash
+python demo.py
+```
+
+The code will match `a.png` and `b.png` in folder `assets/demo`</br>
+Outputting `a_b_match.png` and `a_b_warp.png`
+
+<details>
+<summary>
+	Click to show
+	<code>a.png</code>
+	and
+	<code>b.png</code>.
+</summary>
+<p float="left">
+  <img src="assets/demo/a.png" width="25%" />
+  <img src="assets/demo/b.png" width="25%" /> 
+</p>
+</details>
+
+
+
+<details>
+<summary>
+	Click to show
+	<code>a_b_match.png</code>.
+</summary>
+<p align="left">
+	<img src="assets/demo/_a_b_match.png" width="50%">
+</p>
+<p><code>a_b_match.png</code> is a visualization of the match between the two images</p>
+</details>
+
+<details>
+<summary>
+	Click to show
+	<code>a_b_warp.png</code>.
+</summary>
+<p align="left">
+	<img src="assets/demo/_a_b_warp.png" width="50%">
+</p>
+<p><code>a_b_warp.png</code> shows the effect of projecting `image b` onto `image a` using homography</p>
+</details>
 
 ## 📌 Citation
 

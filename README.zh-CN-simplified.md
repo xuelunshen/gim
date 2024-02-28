@@ -32,11 +32,73 @@
 
 ## ✅ TODO List
 
-- [ ] 代码和 HuggingFace demo 大概在2月30日左右公布 (审查已经结束，正在走流程)
+- [x] Inference code
+- [ ] Training code
 
 ## 🤗 在线体验
 
 去 [Huggingface](https://huggingface.co/spaces/xuelunshen/gim-online) 在线快速体验我们模型的效果
+
+## ⚙️ 运行环境
+
+我的代码运行环境是:
+- `GeForce RTX 3090`
+- `Ubuntu 20.04.3`
+- `Python (3.8.10)`
+- `Pytorch 1.10.2 (py3.8_cuda11.3_cudnn8.2.0_0)`
+
+具体的环境请在安装 `anaconda` 之后运行下面的命令进行安装
+```bash
+conda env create -f environment.yml
+```
+如果上面的命令不能直接一键安装环境，请参考`environment.txt`中每个包的版本进行环境的安装。
+
+## 🔨 使用
+
+克隆我们的仓库, 然后运行下面的命令
+```bash
+python demo.py
+```
+
+代码会将 `assets/demo` 中的 `a.png` 和 `b.png` 进行匹配</br>
+输出 `a_b_match.png` 和 `a_b_warp.png`
+
+<details>
+<summary>
+	点击这里查看
+	<code>a.png</code>
+	和
+	<code>b.png</code>.
+</summary>
+<p float="left">
+  <img src="assets/demo/a.png" width="25%" />
+  <img src="assets/demo/b.png" width="25%" /> 
+</p>
+</details>
+
+
+
+<details>
+<summary>
+	点击这里查看
+	<code>a_b_match.png</code>.
+</summary>
+<p align="left">
+	<img src="assets/demo/_a_b_match.png" width="50%">
+</p>
+<p><code>a_b_match.png</code> 是两张图像匹配的可视化</p>
+</details>
+
+<details>
+<summary>
+	点击这里查看
+	<code>a_b_warp.png</code>.
+</summary>
+<p align="left">
+	<img src="assets/demo/_a_b_warp.png" width="50%">
+</p>
+<p><code>a_b_warp.png</code> 是将图像b用 homography 投影到图像a的效果</p>
+</details>
 
 ## 📌 引用
 
