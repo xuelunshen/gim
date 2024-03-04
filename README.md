@@ -61,8 +61,7 @@ Clone our repository, then run the following command
 python demo.py
 ```
 
-The code will match `a.png` and `b.png` in folder `assets/demo`</br>
-Outputting `a_b_match.png` and `a_b_warp.png`
+The code will match `a.png` and `b.png` in the folder `assets/demo`</br>, and output `a_b_match.png` and `a_b_warp.png`.
 
 <details>
 <summary>
