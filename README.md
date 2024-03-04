@@ -36,6 +36,8 @@
 - [x] Inference code
 - [ ] Training code
 
+> Thank you everyone for your interest in GIM. I am currently catching up with the DDL for my paper. After the completion of my paper, I will continue with the code releasing of GIM. Thank you for your patience. Code releasing is expected to continue in late March.
+
 ## 🤗 Online demo
 
 Go to [Huggingface](https://huggingface.co/spaces/xuelunshen/gim-online) to quickly try our model online.
