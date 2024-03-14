@@ -58,7 +58,13 @@ If the above command fails to install the environment directly, please refer to 
 
 ## 🔨 Usage
 
-Clone our repository, then run the following command
+Clone the repository
+
+Download model weight from [Google Drive](https://drive.google.com/file/d/1xkfDOA9IINI0g2lXavlRP_vYp3E07ne0/view?usp=sharing)
+
+Put it on the folder `weights`
+
+Run the following command
 ```bash
 python demo.py
 ```

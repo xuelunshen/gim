@@ -58,7 +58,13 @@ conda env create -f environment.yml
 
 ## 🔨 使用
 
-克隆我们的仓库, 然后运行下面的命令
+克隆本仓库
+
+从 [Google Drive](https://drive.google.com/file/d/1xkfDOA9IINI0g2lXavlRP_vYp3E07ne0/view?usp=sharing) 下载模型参数
+
+将模型参数放在文件夹 `weights` 里面
+
+运行下面的命令
 ```bash
 python demo.py
 ```
