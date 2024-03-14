@@ -60,6 +60,12 @@ conda env create -f environment.yml
 
 克隆本仓库
 
+```bash
+git clone https://github.com/xuelunshen/gim.git
+cd gim
+mkdir weights
+```
+
 从 [Google Drive](https://drive.google.com/file/d/1xkfDOA9IINI0g2lXavlRP_vYp3E07ne0/view?usp=sharing) 下载模型参数
 
 将模型参数放在文件夹 `weights` 里面

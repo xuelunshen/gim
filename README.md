@@ -60,6 +60,12 @@ If the above command fails to install the environment directly, please refer to 
 
 Clone the repository
 
+```bash
+git clone https://github.com/xuelunshen/gim.git
+cd gim
+mkdir weights
+```
+
 Download model weight from [Google Drive](https://drive.google.com/file/d/1xkfDOA9IINI0g2lXavlRP_vYp3E07ne0/view?usp=sharing)
 
 Put it on the folder `weights`
