@@ -66,7 +66,7 @@ cd gim
 mkdir weights
 ```
 
-Download model weight from [Google Drive](https://drive.google.com/file/d/1xkfDOA9IINI0g2lXavlRP_vYp3E07ne0/view?usp=sharing)
+Download model weight from [Google Drive](https://drive.google.com/file/d/1gk97V4IROnR1Nprq10W9NCFUv2mxXR_-/view?usp=sharing)
 
 Put it on the folder `weights`
 
