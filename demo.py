@@ -3,6 +3,7 @@
 
 import cv2
 import torch
+import argparse
 import warnings
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,6 +12,8 @@ import torchvision.transforms.functional as F
 from os.path import join
 
 from dkm.models.model_zoo.DKMv3 import DKMv3
+from gluefactory.superpoint import SuperPoint
+from gluefactory.models.matchers.lightglue import LightGlue
 
 DEFAULT_MIN_NUM_MATCHES = 4
 DEFAULT_RANSAC_MAX_ITER = 10000
@@ -63,13 +66,13 @@ def resize_image(image, size, interp):
 
 
 def fast_make_matching_figure(data, b_id):
-    color0 = (data['color0'][b_id].permute(1, 2, 0).cpu().numpy() * 255).round().astype(np.uint8)  # (rH, rW, 3)
-    color1 = (data['color1'][b_id].permute(1, 2, 0).cpu().numpy() * 255).round().astype(np.uint8)  # (rH, rW, 3)
+    color0 = (data['color0'][b_id].permute(1, 2, 0).cpu().detach().numpy() * 255).round().astype(np.uint8)  # (rH, rW, 3)
+    color1 = (data['color1'][b_id].permute(1, 2, 0).cpu().detach().numpy() * 255).round().astype(np.uint8)  # (rH, rW, 3)
     gray0 = cv2.cvtColor(color0, cv2.COLOR_RGB2GRAY)
     gray1 = cv2.cvtColor(color1, cv2.COLOR_RGB2GRAY)
-    kpts0 = data['mkpts0_f'].cpu().numpy()
-    kpts1 = data['mkpts1_f'].cpu().numpy()
-    mconf = data['mconf'].cpu().numpy()
+    kpts0 = data['mkpts0_f'].cpu().detach().numpy()
+    kpts1 = data['mkpts1_f'].cpu().detach().numpy()
+    mconf = data['mconf'].cpu().detach().numpy()
     inliers = data['inliers']
 
     rows = 2
@@ -102,13 +105,13 @@ def fast_make_matching_figure(data, b_id):
 
 
 def fast_make_matching_overlay(data, b_id):
-    color0 = (data['color0'][b_id].permute(1, 2, 0).cpu().numpy() * 255).round().astype(np.uint8)  # (rH, rW, 3)
-    color1 = (data['color1'][b_id].permute(1, 2, 0).cpu().numpy() * 255).round().astype(np.uint8)  # (rH, rW, 3)
+    color0 = (data['color0'][b_id].permute(1, 2, 0).cpu().detach().numpy() * 255).round().astype(np.uint8)  # (rH, rW, 3)
+    color1 = (data['color1'][b_id].permute(1, 2, 0).cpu().detach().numpy() * 255).round().astype(np.uint8)  # (rH, rW, 3)
     gray0 = cv2.cvtColor(color0, cv2.COLOR_RGB2GRAY)
     gray1 = cv2.cvtColor(color1, cv2.COLOR_RGB2GRAY)
-    kpts0 = data['mkpts0_f'].cpu().numpy()
-    kpts1 = data['mkpts1_f'].cpu().numpy()
-    mconf = data['mconf'].cpu().numpy()
+    kpts0 = data['mkpts0_f'].cpu().detach().numpy()
+    kpts1 = data['mkpts1_f'].cpu().detach().numpy()
+    mconf = data['mconf'].cpu().detach().numpy()
     inliers = data['inliers']
 
     rows = 2
@@ -177,8 +180,8 @@ def compute_geom(data,
                  ransac_max_iter=DEFAULT_RANSAC_MAX_ITER,
                  ) -> dict:
 
-    mkpts0 = data["mkpts0_f"].cpu().numpy()
-    mkpts1 = data["mkpts1_f"].cpu().numpy()
+    mkpts0 = data["mkpts0_f"].cpu().detach().numpy()
+    mkpts1 = data["mkpts1_f"].cpu().detach().numpy()
 
     if len(mkpts0) < 2 * DEFAULT_MIN_NUM_MATCHES:
         return {}
@@ -221,8 +224,8 @@ def compute_geom(data,
 
 
 def wrap_images(img0, img1, geo_info, geom_type):
-    img0 = img0[0].permute((1, 2, 0)).cpu().numpy()[..., ::-1]
-    img1 = img1[0].permute((1, 2, 0)).cpu().numpy()[..., ::-1]
+    img0 = img0[0].permute((1, 2, 0)).cpu().detach().numpy()[..., ::-1]
+    img1 = img1[0].permute((1, 2, 0)).cpu().detach().numpy()[..., ::-1]
 
     h1, w1, _ = img0.shape
     h2, w2, _ = img1.shape
@@ -302,29 +305,74 @@ def fig2im(fig):
 
 
 if __name__ == '__main__':
+    model_zoo = ['gim_dkm', 'gim_lightglue']
+
+    # model
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model', type=str, default='gim_dkm', choices=model_zoo)
+    args = parser.parse_args()
 
     # device
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     # load model
-    model = DKMv3(weights=None, h=672, w=896)
+    ckpt = None
+    model = None
+    detector = None
+    if args.model == 'gim_dkm':
+        ckpt = 'gim_dkm_100h.ckpt'
+        model = DKMv3(weights=None, h=672, w=896)
+    elif args.model == 'gim_lightglue':
+        ckpt = 'gim_lightglue_100h.ckpt'
+        detector = SuperPoint({
+            'max_num_keypoints': 2048,
+            'force_num_keypoints': True,
+            'detection_threshold': 0.0,
+            'nms_radius': 3,
+            'trainable': False,
+        })
+        model = LightGlue({
+            'filter_threshold': 0.1,
+            'flash': False,
+            'checkpointed': True,
+        })
 
     # weights path
-    checkpoints_path = join('weights', 'gim_dkm_100h.ckpt')
+    checkpoints_path = join('weights', ckpt)
 
     # load state dict
-    state_dict = torch.load(checkpoints_path, map_location='cpu')
-    if 'state_dict' in state_dict.keys(): state_dict = state_dict['state_dict']
-    for k in list(state_dict.keys()):
-        if k.startswith('model.'):
-            state_dict[k.replace('model.', '', 1)] = state_dict.pop(k)
-        if 'encoder.net.fc' in k:
-            state_dict.pop(k)
+    if args.model == 'gim_dkm':
+        state_dict = torch.load(checkpoints_path, map_location='cpu')
+        if 'state_dict' in state_dict.keys(): state_dict = state_dict['state_dict']
+        for k in list(state_dict.keys()):
+            if k.startswith('model.'):
+                state_dict[k.replace('model.', '', 1)] = state_dict.pop(k)
+            if 'encoder.net.fc' in k:
+                state_dict.pop(k)
+        model.load_state_dict(state_dict)
 
-    # load state dict
-    model.load_state_dict(state_dict)
+    elif args.model == 'gim_lightglue':
+        state_dict = torch.load(checkpoints_path, map_location='cpu')
+        if 'state_dict' in state_dict.keys(): state_dict = state_dict['state_dict']
+        for k in list(state_dict.keys()):
+            if k.startswith('model.'):
+                state_dict.pop(k)
+            if k.startswith('superpoint.'):
+                state_dict[k.replace('superpoint.', '', 1)] = state_dict.pop(k)
+        detector.load_state_dict(state_dict)
+
+        state_dict = torch.load(checkpoints_path, map_location='cpu')
+        if 'state_dict' in state_dict.keys(): state_dict = state_dict['state_dict']
+        for k in list(state_dict.keys()):
+            if k.startswith('superpoint.'):
+                state_dict.pop(k)
+            if k.startswith('model.'):
+                state_dict[k.replace('model.', '', 1)] = state_dict.pop(k)
+        model.load_state_dict(state_dict)
 
     # eval mode
+    if detector is not None:
+        detector = detector.eval().to(device)
     model = model.eval().to(device)
 
     name0 = 'a'
@@ -344,29 +392,69 @@ if __name__ == '__main__':
 
     data = dict(color0=image0, color1=image1, image0=image0, image1=image1)
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        dense_matches, dense_certainty = model.match(image0, image1)
-        sparse_matches, mconf = model.sample(dense_matches, dense_certainty, 5000)
+    if args.model == 'gim_dkm':
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            dense_matches, dense_certainty = model.match(image0, image1)
+            sparse_matches, mconf = model.sample(dense_matches, dense_certainty, 5000)
 
-    height0, width0 = image0.shape[-2:]
-    height1, width1 = image1.shape[-2:]
+        height0, width0 = image0.shape[-2:]
+        height1, width1 = image1.shape[-2:]
 
-    kpts0 = sparse_matches[:, :2]
-    kpts0 = torch.stack((
-        width0 * (kpts0[:, 0] + 1) / 2, height0 * (kpts0[:, 1] + 1) / 2), dim=-1,)
-    kpts1 = sparse_matches[:, 2:]
-    kpts1 = torch.stack((
-        width1 * (kpts1[:, 0] + 1) / 2, height1 * (kpts1[:, 1] + 1) / 2), dim=-1,)
+        kpts0 = sparse_matches[:, :2]
+        kpts0 = torch.stack((
+            width0 * (kpts0[:, 0] + 1) / 2, height0 * (kpts0[:, 1] + 1) / 2), dim=-1,)
+        kpts1 = sparse_matches[:, 2:]
+        kpts1 = torch.stack((
+            width1 * (kpts1[:, 0] + 1) / 2, height1 * (kpts1[:, 1] + 1) / 2), dim=-1,)
+        b_ids = torch.where(mconf[None])[0]
+    elif args.model == 'gim_lightglue':
+        gray0 = read_image(img_path0, grayscale=True)
+        gray1 = read_image(img_path1, grayscale=True)
+        gray0 = preprocess(gray0, grayscale=True)[0]
+        gray1 = preprocess(gray1, grayscale=True)[0]
+
+        gray0 = gray0.to(device)[None]
+        gray1 = gray1.to(device)[None]
+        scale0 = torch.tensor(scale0).to(device)[None]
+        scale1 = torch.tensor(scale1).to(device)[None]
+
+        data.update(dict(gray0=gray0, gray1=gray1))
+
+        size0 = torch.tensor(data["gray0"].shape[-2:][::-1])[None]
+        size1 = torch.tensor(data["gray1"].shape[-2:][::-1])[None]
+
+        data.update(dict(size0=size0, size1=size1))
+        data.update(dict(scale0=scale0, scale1=scale1))
+
+        pred = {}
+        pred.update({k + '0': v for k, v in detector({
+            "image": data["gray0"],
+            "image_size": data["size0"],
+        }).items()})
+        pred.update({k + '1': v for k, v in detector({
+            "image": data["gray1"],
+            "image_size": data["size1"],
+        }).items()})
+        pred.update(model({**pred, **data,
+                           **{'resize0': data['size0'], 'resize1': data['size1']}}))
+
+        kpts0 = torch.cat([kp * s for kp, s in zip(pred['keypoints0'], data['scale0'][:, None])])
+        kpts1 = torch.cat([kp * s for kp, s in zip(pred['keypoints1'], data['scale1'][:, None])])
+        m_bids = torch.nonzero(pred['keypoints0'].sum(dim=2) > -1)[:, 0]
+        matches = pred['matches']
+        bs = data['image0'].size(0)
+        kpts0 = torch.cat([kpts0[m_bids == b_id][matches[b_id][..., 0]] for b_id in range(bs)])
+        kpts1 = torch.cat([kpts1[m_bids == b_id][matches[b_id][..., 1]] for b_id in range(bs)])
+        b_ids = torch.cat([m_bids[m_bids == b_id][matches[b_id][..., 0]] for b_id in range(bs)])
+        mconf = torch.cat(pred['scores'])
 
     # robust fitting
-    _, mask = cv2.findFundamentalMat(kpts0.cpu().numpy(),
-                                     kpts1.cpu().numpy(),
+    _, mask = cv2.findFundamentalMat(kpts0.cpu().detach().numpy(),
+                                     kpts1.cpu().detach().numpy(),
                                      cv2.USAC_MAGSAC, ransacReprojThreshold=1.0,
                                      confidence=0.999999, maxIters=10000)
     mask = mask.ravel() > 0
-
-    b_ids = torch.where(mconf[None])[0]
 
     data.update({
         'hw0_i': image0.shape[-2:],
@@ -383,9 +471,9 @@ if __name__ == '__main__':
     out = fast_make_matching_figure(data, b_id=0)
     overlay = fast_make_matching_overlay(data, b_id=0)
     out = cv2.addWeighted(out, 1 - alpha, overlay, alpha, 0)
-    cv2.imwrite(join(image_dir, f'{name0}_{name1}_match.png'), out[..., ::-1])
+    cv2.imwrite(join(image_dir, f'{name0}_{name1}_{args.model}_match.png'), out[..., ::-1])
 
     geom_info = compute_geom(data)
     wrapped_images = wrap_images(image0, image1, geom_info,
                                  "Homography")
-    cv2.imwrite(join(image_dir, f'{name0}_{name1}_warp.png'), wrapped_images)
+    cv2.imwrite(join(image_dir, f'{name0}_{name1}_{args.model}_warp.png'), wrapped_images)

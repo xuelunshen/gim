@@ -33,10 +33,13 @@
 
 ## ✅ TODO List
 
-- [x] Inference code
+- [ ] Inference code
+  - [x] gim_dkm
+  - [ ] gim_loftr
+  - [x] gim_lightglue
 - [ ] Training code
 
-> Thank you everyone for your interest in GIM. I am currently catching up with the DDL for my paper. After the completion of my paper, I will continue with the code releasing of GIM. Thank you for your patience. Code releasing is expected to continue in late March.
+> We are actively continuing with the remaining open-source work and appreciate everyone's attention.
 
 ## 🤗 Online demo
 
@@ -44,17 +47,20 @@ Go to [Huggingface](https://huggingface.co/spaces/xuelunshen/gim-online) to quic
 
 ## ⚙️ Environment
 
-My code running environment is:
-- `GeForce RTX 3090`
-- `Ubuntu 20.04.3`
-- `Python (3.8.10)`
-- `Pytorch 1.10.2 (py3.8_cuda11.3_cudnn8.2.0_0)`
-
-For the specific environment, please run the following command to install `anaconda`
+I set up the running environment on a new machine using the commands listed below.
 ```bash
-conda env create -f environment.yml
+conda install pytorch==1.10.1 torchvision==0.11.2 torchaudio==0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge
+pip install albumentations==1.0.1 --no-binary=imgaug,albumentations
+pip install pytorch-lightning==1.5.10
+pip install opencv-python==4.5.3.56
+pip install imagesize==1.2.0
+pip install kornia==0.6.10
+pip install einops==0.3.0
+pip install loguru==0.5.3
+pip install joblib==1.0.1
+pip install yacs==0.1.8
+pip install h5py==3.1.0
 ```
-If the above command fails to install the environment directly, please refer to the clean environment in `environment.txt` to install each package.
 
 ## 🔨 Usage
 
@@ -66,13 +72,17 @@ cd gim
 mkdir weights
 ```
 
-Download model weight from [Google Drive](https://drive.google.com/file/d/1gk97V4IROnR1Nprq10W9NCFUv2mxXR_-/view?usp=sharing)
+Download `gim_dkm` model weight from [Google Drive](https://drive.google.com/file/d/1gk97V4IROnR1Nprq10W9NCFUv2mxXR_-/view?usp=sharing)
 
 Put it on the folder `weights`
 
 Run the following command
 ```bash
-python demo.py
+python demo.py --model gim_dkm
+```
+or
+```bash
+python demo.py --model gim_lightglue
 ```
 
 The code will match `a.png` and `b.png` in the folder `assets/demo`</br>, and output `a_b_match.png` and `a_b_warp.png`.

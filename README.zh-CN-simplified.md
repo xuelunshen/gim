@@ -33,10 +33,13 @@
 
 ## ✅ TODO List
 
-- [x] Inference code
+- [ ] Inference code
+  - [x] gim_dkm
+  - [ ] gim_loftr
+  - [x] gim_lightglue
 - [ ] Training code
 
-> 很感谢大家对 GIM 的关注，我最近正在赶论文的 DDL，在论文完成之后，我会继续 GIM 的开源，尽快将 GIM 的代码分享给大家，感谢大家的耐心等待。预计三月下旬会继续代码的公开。
+> 剩余的开源工作我们还在抓紧进行，感谢大家的关注。
 
 ## 🤗 在线体验
 
@@ -44,17 +47,20 @@
 
 ## ⚙️ 运行环境
 
-我的代码运行环境是:
-- `GeForce RTX 3090`
-- `Ubuntu 20.04.3`
-- `Python (3.8.10)`
-- `Pytorch 1.10.2 (py3.8_cuda11.3_cudnn8.2.0_0)`
-
-具体的环境请在安装 `anaconda` 之后运行下面的命令进行安装
+我在新服务器上是使用下面的命令进行运行环境的安装。
 ```bash
-conda env create -f environment.yml
+conda install pytorch==1.10.1 torchvision==0.11.2 torchaudio==0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge
+pip install albumentations==1.0.1 --no-binary=imgaug,albumentations
+pip install pytorch-lightning==1.5.10
+pip install opencv-python==4.5.3.56
+pip install imagesize==1.2.0
+pip install kornia==0.6.10
+pip install einops==0.3.0
+pip install loguru==0.5.3
+pip install joblib==1.0.1
+pip install yacs==0.1.8
+pip install h5py==3.1.0
 ```
-如果上面的命令不能直接一键安装环境，请参考`environment.txt`中每个包的版本进行环境的安装。
 
 ## 🔨 使用
 
@@ -66,13 +72,17 @@ cd gim
 mkdir weights
 ```
 
-从 [Google Drive](https://drive.google.com/file/d/1gk97V4IROnR1Nprq10W9NCFUv2mxXR_-/view?usp=sharing) 下载模型参数
+从 [Google Drive](https://drive.google.com/file/d/1gk97V4IROnR1Nprq10W9NCFUv2mxXR_-/view?usp=sharing) 下载 `gim_dkm` 的模型参数
 
 将模型参数放在文件夹 `weights` 里面
 
 运行下面的命令
 ```bash
-python demo.py
+python demo.py --model gim_dkm
+```
+or
+```bash
+python demo.py --model gim_lightglue
 ```
 
 代码会将 `assets/demo` 中的 `a.png` 和 `b.png` 进行匹配</br>
