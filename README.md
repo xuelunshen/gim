@@ -84,18 +84,18 @@ or
 python demo.py --model gim_lightglue
 ```
 
-The code will match `a.png` and `b.png` in the folder `assets/demo`</br>, and output `a_b_match.png` and `a_b_warp.png`.
+The code will match `a1.png` and `a2.png` in the folder `assets/demo`</br>, and output `a1_a2_match.png` and `a1_a2_warp.png`.
 
 <details>
 <summary>
 	Click to show
-	<code>a.png</code>
+	<code>a1.png</code>
 	and
-	<code>b.png</code>.
+	<code>a2.png</code>.
 </summary>
 <p float="left">
-  <img src="assets/demo/a.png" width="25%" />
-  <img src="assets/demo/b.png" width="25%" /> 
+  <img src="assets/demo/a1.png" width="25%" />
+  <img src="assets/demo/a2.png" width="25%" /> 
 </p>
 </details>
 
@@ -104,23 +104,39 @@ The code will match `a.png` and `b.png` in the folder `assets/demo`</br>, and ou
 <details>
 <summary>
 	Click to show
-	<code>a_b_match.png</code>.
+	<code>a1_a2_match.png</code>.
 </summary>
 <p align="left">
-	<img src="assets/demo/_a_b_match.png" width="50%">
+	<img src="assets/demo/_a1_a2_match.png" width="50%">
 </p>
-<p><code>a_b_match.png</code> is a visualization of the match between the two images</p>
+<p><code>a1_a2_match.png</code> is a visualization of the match between the two images</p>
 </details>
 
 <details>
 <summary>
 	Click to show
-	<code>a_b_warp.png</code>.
+	<code>a1_a2_warp.png</code>.
 </summary>
 <p align="left">
-	<img src="assets/demo/_a_b_warp.png" width="50%">
+	<img src="assets/demo/_a1_a2_warp.png" width="50%">
 </p>
-<p><code>a_b_warp.png</code> shows the effect of projecting `image b` onto `image a` using homography</p>
+<p><code>a1_a2_warp.png</code> shows the effect of projecting <code>image a2</code> onto <code>image a1</code> using homography</p>
+</details>
+
+There are more images in the `assets/demo` folder, you can try them out.
+
+<details>
+<summary>
+	Click to show other images.
+</summary>
+<p float="left">
+  <img src="assets/demo/b1.png" width="15%" />
+  <img src="assets/demo/b2.png" width="15%" /> 
+  <img src="assets/demo/c1.png" width="15%" />
+  <img src="assets/demo/c2.png" width="15%" /> 
+  <img src="assets/demo/d1.png" width="15%" />
+  <img src="assets/demo/d2.png" width="15%" /> 
+</p>
 </details>
 
 ## 📌 Citation

@@ -84,19 +84,19 @@ or
 python demo.py --model gim_lightglue
 ```
 
-代码会将 `assets/demo` 中的 `a.png` 和 `b.png` 进行匹配</br>
-输出 `a_b_match.png` 和 `a_b_warp.png`
+代码会将 `assets/demo` 中的 `a1.png` 和 `a2.png` 进行匹配</br>
+输出 `a1_a2_match.png` 和 `a1_a2_warp.png`
 
 <details>
 <summary>
 	点击这里查看
-	<code>a.png</code>
+	<code>a1.png</code>
 	和
-	<code>b.png</code>.
+	<code>a2.png</code>.
 </summary>
 <p float="left">
-  <img src="assets/demo/a.png" width="25%" />
-  <img src="assets/demo/b.png" width="25%" /> 
+  <img src="assets/demo/a1.png" width="25%" />
+  <img src="assets/demo/a2.png" width="25%" /> 
 </p>
 </details>
 
@@ -105,23 +105,39 @@ python demo.py --model gim_lightglue
 <details>
 <summary>
 	点击这里查看
-	<code>a_b_match.png</code>.
+	<code>a1_a2_match.png</code>.
 </summary>
 <p align="left">
-	<img src="assets/demo/_a_b_match.png" width="50%">
+	<img src="assets/demo/_a1_a2_match.png" width="50%">
 </p>
-<p><code>a_b_match.png</code> 是两张图像匹配的可视化</p>
+<p><code>a1_a2_match.png</code> 是两张图像匹配的可视化</p>
 </details>
 
 <details>
 <summary>
 	点击这里查看
-	<code>a_b_warp.png</code>.
+	<code>a1_a2_warp.png</code>.
 </summary>
 <p align="left">
-	<img src="assets/demo/_a_b_warp.png" width="50%">
+	<img src="assets/demo/_a1_a2_warp.png" width="50%">
 </p>
-<p><code>a_b_warp.png</code> 是将图像b用 homography 投影到图像a的效果</p>
+<p><code>a1_a2_warp.png</code> 是将<code>图像a2</code>用 homography 投影到<code>图像a1</code>的效果</p>
+</details>
+
+还有更多图像在文件夹 `assets/demo` 中, 大家都可以尝试拿来匹配看看.
+
+<details>
+<summary>
+	点击这里查看更多图像
+</summary>
+<p float="left">
+  <img src="assets/demo/b1.png" width="15%" />
+  <img src="assets/demo/b2.png" width="15%" /> 
+  <img src="assets/demo/c1.png" width="15%" />
+  <img src="assets/demo/c2.png" width="15%" /> 
+  <img src="assets/demo/d1.png" width="15%" />
+  <img src="assets/demo/d2.png" width="15%" /> 
+</p>
 </details>
 
 ## 📌 引用
