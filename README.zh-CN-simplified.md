@@ -69,7 +69,6 @@ pip install h5py==3.1.0
 ```bash
 git clone https://github.com/xuelunshen/gim.git
 cd gim
-mkdir weights
 ```
 
 从 [Google Drive](https://drive.google.com/file/d/1gk97V4IROnR1Nprq10W9NCFUv2mxXR_-/view?usp=sharing) 下载 `gim_dkm` 的模型参数

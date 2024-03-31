@@ -69,7 +69,6 @@ Clone the repository
 ```bash
 git clone https://github.com/xuelunshen/gim.git
 cd gim
-mkdir weights
 ```
 
 Download `gim_dkm` model weight from [Google Drive](https://drive.google.com/file/d/1gk97V4IROnR1Nprq10W9NCFUv2mxXR_-/view?usp=sharing)
