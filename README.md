@@ -168,7 +168,7 @@ There are more images in the `assets/demo` folder, you can try them out.
 
 ## 📌 Citation
 
-If our code helps your research, please give a citation to our paper ❤️ Thank you very much.
+If the paper and code from `gim` help your research, we kindly ask you to give a citation to our paper ❤️. Additionally, if you appreciate our work and find this repository useful, giving it a star ⭐️ would be a wonderful way to support our work. Thank you very much.
 
 ```bibtex
 @inproceedings{

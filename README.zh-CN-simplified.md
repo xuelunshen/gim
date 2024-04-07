@@ -169,7 +169,7 @@ python demo.py --model gim_lightglue
 
 ## 📌 引用
 
-如果我们的代码对你的研究有帮助, 请给我们的论文一个引用吧 ❤️ 多谢啦.
+如果我们的代码对你的研究有帮助, 请给我们的论文一个引用 ❤️ 并给 gim 的仓库点个小星星 ⭐️ 吧, 多谢啦～
 
 ```bibtex
 @inproceedings{
