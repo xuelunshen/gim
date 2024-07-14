@@ -11,6 +11,9 @@ import torchvision.transforms.functional as F
 
 from os.path import join
 
+from loftr.loftr import LoFTR
+from loftr.misc import lower_config
+from loftr.config import get_cfg_defaults
 from dkm.models.model_zoo.DKMv3 import DKMv3
 from gluefactory.superpoint import SuperPoint
 from gluefactory.models.matchers.lightglue import LightGlue
@@ -300,12 +303,13 @@ def fig2im(fig):
     fig.canvas.draw()
     w, h = fig.canvas.get_width_height()
     buf_ndarray = np.frombuffer(fig.canvas.tostring_rgb(), dtype="u1")
+    # noinspection PyArgumentList
     im = buf_ndarray.reshape(h, w, 3)
     return im
 
 
 if __name__ == '__main__':
-    model_zoo = ['gim_dkm', 'gim_lightglue']
+    model_zoo = ['gim_dkm', 'gim_loftr', 'gim_lightglue']
 
     # model
     parser = argparse.ArgumentParser()
@@ -322,6 +326,9 @@ if __name__ == '__main__':
     if args.model == 'gim_dkm':
         ckpt = 'gim_dkm_100h.ckpt'
         model = DKMv3(weights=None, h=672, w=896)
+    elif args.model == 'gim_loftr':
+        ckpt = 'gim_loftr_50h.ckpt'
+        model = LoFTR(lower_config(get_cfg_defaults())['loftr'])
     elif args.model == 'gim_lightglue':
         ckpt = 'gim_lightglue_100h.ckpt'
         detector = SuperPoint({
@@ -349,6 +356,13 @@ if __name__ == '__main__':
                 state_dict[k.replace('model.', '', 1)] = state_dict.pop(k)
             if 'encoder.net.fc' in k:
                 state_dict.pop(k)
+        model.load_state_dict(state_dict)
+
+    elif args.model == 'gim_loftr':
+        state_dict = torch.load(checkpoints_path, map_location='cpu')
+        if 'state_dict' in state_dict.keys(): state_dict = state_dict['state_dict']
+        # save state dict
+        torch.save(state_dict, checkpoints_path)
         model.load_state_dict(state_dict)
 
     elif args.model == 'gim_lightglue':
@@ -390,6 +404,7 @@ if __name__ == '__main__':
     image0 = image0.to(device)[None]
     image1 = image1.to(device)[None]
 
+    b_ids, mconf, kpts0, kpts1 = None, None, None, None
     data = dict(color0=image0, color1=image1, image0=image0, image1=image1)
 
     if args.model == 'gim_dkm':
@@ -408,6 +423,15 @@ if __name__ == '__main__':
         kpts1 = torch.stack((
             width1 * (kpts1[:, 0] + 1) / 2, height1 * (kpts1[:, 1] + 1) / 2), dim=-1,)
         b_ids = torch.where(mconf[None])[0]
+
+    elif args.model == 'gim_loftr':
+        with torch.no_grad():
+            model(data)
+        kpts0 = data['mkpts0_f']
+        kpts1 = data['mkpts1_f']
+        b_ids = data['m_bids']
+        mconf = data['mconf']
+
     elif args.model == 'gim_lightglue':
         gray0 = read_image(img_path0, grayscale=True)
         gray1 = read_image(img_path1, grayscale=True)
@@ -428,16 +452,17 @@ if __name__ == '__main__':
         data.update(dict(scale0=scale0, scale1=scale1))
 
         pred = {}
-        pred.update({k + '0': v for k, v in detector({
-            "image": data["gray0"],
-            "image_size": data["size0"],
-        }).items()})
-        pred.update({k + '1': v for k, v in detector({
-            "image": data["gray1"],
-            "image_size": data["size1"],
-        }).items()})
-        pred.update(model({**pred, **data,
-                           **{'resize0': data['size0'], 'resize1': data['size1']}}))
+        with torch.no_grad():
+            pred.update({k + '0': v for k, v in detector({
+                "image": data["gray0"],
+                "image_size": data["size0"],
+            }).items()})
+            pred.update({k + '1': v for k, v in detector({
+                "image": data["gray1"],
+                "image_size": data["size1"],
+            }).items()})
+            pred.update(model({**pred, **data,
+                               **{'resize0': data['size0'], 'resize1': data['size1']}}))
 
         kpts0 = torch.cat([kp * s for kp, s in zip(pred['keypoints0'], data['scale0'][:, None])])
         kpts1 = torch.cat([kp * s for kp, s in zip(pred['keypoints1'], data['scale1'][:, None])])
