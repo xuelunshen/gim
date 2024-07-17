@@ -361,8 +361,6 @@ if __name__ == '__main__':
     elif args.model == 'gim_loftr':
         state_dict = torch.load(checkpoints_path, map_location='cpu')
         if 'state_dict' in state_dict.keys(): state_dict = state_dict['state_dict']
-        # save state dict
-        torch.save(state_dict, checkpoints_path)
         model.load_state_dict(state_dict)
 
     elif args.model == 'gim_lightglue':
