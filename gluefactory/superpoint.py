@@ -170,7 +170,7 @@ class SuperPoint(BaseModel):
     }
     required_data_keys = ["image"]
 
-    checkpoint_url = "https://github.com/magicleap/SuperGluePretrainedNetwork/raw/master/models/weights/superpoint_v1.pth"  # noqa: E501
+    # checkpoint_url = "https://github.com/magicleap/SuperGluePretrainedNetwork/raw/master/models/weights/superpoint_v1.pth"  # noqa: E501
 
     def _init(self, conf):
         self.relu = nn.ReLU(inplace=True)
@@ -200,7 +200,7 @@ class SuperPoint(BaseModel):
                 c5, conf.descriptor_dim, kernel_size=1, stride=1, padding=0
             )
 
-        self.load_state_dict(torch.load(os.path.join('weights', 'superpoint_v1.pth')))
+        # self.load_state_dict(torch.load(os.path.join('weights', 'superpoint_v1.pth')))
 
     def _forward(self, data):
         image = data["image"]

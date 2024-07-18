@@ -9,9 +9,9 @@ from omegaconf import OmegaConf
 from torch import nn
 from torch.utils.checkpoint import checkpoint
 
-from ...settings import DATA_PATH
-from ..utils.losses import NLLLoss
-from ..utils.metrics import matcher_metrics
+# from ...settings import DATA_PATH
+# from ..utils.losses import NLLLoss
+# from ..utils.metrics import matcher_metrics
 
 FLASH_AVAILABLE = hasattr(F, "scaled_dot_product_attention")
 
@@ -354,41 +354,41 @@ class LightGlue(nn.Module):
             [TokenConfidence(d) for _ in range(n - 1)]
         )
 
-        self.loss_fn = NLLLoss(conf.loss)
+        # self.loss_fn = NLLLoss(conf.loss)
 
-        state_dict = None
-        if conf.weights is not None:
-            # weights can be either a path or an existing file from official LG
-            if Path(conf.weights).exists():
-                state_dict = torch.load(conf.weights, map_location="cpu")
-            elif (Path(DATA_PATH) / conf.weights).exists():
-                state_dict = torch.load(
-                    str(DATA_PATH / conf.weights), map_location="cpu"
-                )
-            elif (Path('weights') / (conf.weights + '.pth')).exists():
-                state_dict = torch.load(
-                    str(Path('weights') / (conf.weights + '.pth')), map_location="cpu"
-                )
-                print(f"Readed weights from {Path('weights') / (conf.weights + '.pth')}")
-            else:
-                fname = (
-                    f"{conf.weights}_{conf.weights_from_version}".replace(".", "-")
-                    + ".pth"
-                )
-                state_dict = torch.hub.load_state_dict_from_url(
-                    self.url.format(conf.weights_from_version, conf.weights),
-                    file_name=fname,
-                )
-
-        if state_dict:
-            # rename old state dict entries
-            for i in range(self.conf.n_layers):
-                pattern = f"self_attn.{i}", f"transformers.{i}.self_attn"
-                state_dict = {k.replace(*pattern): v for k, v in state_dict.items()}
-                pattern = f"cross_attn.{i}", f"transformers.{i}.cross_attn"
-                state_dict = {k.replace(*pattern): v for k, v in state_dict.items()}
-            self.load_state_dict(state_dict, strict=False)
-            print(f"Loaded weights from {conf.weights}")
+        # state_dict = None
+        # if conf.weights is not None:
+        #     # weights can be either a path or an existing file from official LG
+        #     if Path(conf.weights).exists():
+        #         state_dict = torch.load(conf.weights, map_location="cpu")
+        #     elif (Path(DATA_PATH) / conf.weights).exists():
+        #         state_dict = torch.load(
+        #             str(DATA_PATH / conf.weights), map_location="cpu"
+        #         )
+        #     elif (Path('weights') / (conf.weights + '.pth')).exists():
+        #         state_dict = torch.load(
+        #             str(Path('weights') / (conf.weights + '.pth')), map_location="cpu"
+        #         )
+        #         print(f"Readed weights from {Path('weights') / (conf.weights + '.pth')}")
+        #     else:
+        #         fname = (
+        #             f"{conf.weights}_{conf.weights_from_version}".replace(".", "-")
+        #             + ".pth"
+        #         )
+        #         state_dict = torch.hub.load_state_dict_from_url(
+        #             self.url.format(conf.weights_from_version, conf.weights),
+        #             file_name=fname,
+        #         )
+        #
+        # if state_dict:
+        #     # rename old state dict entries
+        #     for i in range(self.conf.n_layers):
+        #         pattern = f"self_attn.{i}", f"transformers.{i}.self_attn"
+        #         state_dict = {k.replace(*pattern): v for k, v in state_dict.items()}
+        #         pattern = f"cross_attn.{i}", f"transformers.{i}.cross_attn"
+        #         state_dict = {k.replace(*pattern): v for k, v in state_dict.items()}
+        #     self.load_state_dict(state_dict, strict=False)
+        #     print(f"Loaded weights from {conf.weights}")
 
     def compile(self, mode="reduce-overhead"):
         if self.conf.width_confidence != -1:

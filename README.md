@@ -31,6 +31,46 @@
 
 </div>
 
+## 📊 ZEB: Zero-shot Evaluation Benchmark
+
+1. Create a folder named **`zeb`**.
+2. Download zip archives containing the **ZEB** data from [the URL](https://stuxmueducn-my.sharepoint.com/:f:/g/personal/lizijun_stu_xmu_edu_cn/EmHLjQpbpDRKmiED88rxGl4BFIkSp7vAzXifwXtvVbQA9w?e=ey8WVk), put it into the **`zeb`** folder and unzip zip archives.
+3. Run the following commands
+
+<p></p>
+<details>
+<summary><b>[ 🖱️ Click to show commands]</b></summary>
+
+The number **1** below represents the number of GPUs you want to use. If you want to use **2 GPUs**, change the number **1** to **2**.
+
+```bash
+sh TEST_GIM_DKM.sh 1
+```
+or
+```bash
+sh TEST_GIM_LOFTR.sh 1
+```
+or
+```bash
+sh TEST_GIM_LIGHTGLUE.sh 1
+```
+or
+```bash
+sh TEST_ROOT_SIFT.sh 1
+```
+</details>
+<p></p>
+
+4. Run the command `python check.py` to check if everything outputs `"Good"`.
+5. Run the command `python analysis.py --dir dump/zeb --wid gim_dkm --version 100h --verbose` to get result.
+6. Paste the **ZEB** result to the Excel file named `zeb.xlsx`.
+
+<p></p>
+<details>
+<summary><b>[ 🖱️ Click to show ZEB Result]</b></summary>
+
+> The data in this table comes from the **ZEB**: <u>Zero-shot Evaluation Benchmark for Image Matching</u> proposed in the paper. This benchmark consists of 12 public datasets that cover a variety of scenes, weather conditions, and camera models, corresponding to the 12 test sequences starting from GL3 in the table.
+
 |      | <div align="left">Method</div>                               | <div align="left">Mean<br />AUC@5°<br />(%) ↑</div> | GL3      | BLE      | ETI      | ETO      | KIT      | WEA      | SEA      | NIG      | MUL      | SCE      | ICL      | GTA      |
 | ---- | ------------------------------------------------------------ | --------------------------------------------------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- |
 |      |                                                              | Handcrafted                                         |          |          |          |          |          |          |          |          |          |          |          |          |
@@ -55,7 +95,8 @@
 |      | RoMa (out)                                                   | 48.8                                                | 48.3     | 40.6     | 73.6     | **79.8** | 39.9     | 34.4     | 51.4     | 24.2     | **59.9** | 33.7     | 41.3     | 59.2     |
 |      | **GIM_RoMa**                                                 | ToDO                                                |          |          |          |          |          |          |          |          |          |          |          |          |
 
-> The data in this table comes from the **ZEB**: <u>Zero-shot Evaluation Benchmark for Image Matching</u> proposed in the paper. This benchmark consists of 12 public datasets that cover a variety of scenes, weather conditions, and camera models, corresponding to the 12 test sequences starting from GL3 in the table. We will release **ZEB** as soon as possible.
+</details>
+<p></p>
 
 ## ✅ TODO List
 
