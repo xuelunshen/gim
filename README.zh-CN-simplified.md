@@ -31,6 +31,187 @@
 
 </div>
 
+## ✅ 待办清单
+
+- [x] **ZEB**: **Z**ero-shot **E**valuation **B**enchmark
+- [ ] Inference code
+  - [ ] gim_roma
+  - [x] gim_dkm
+  - [x] gim_loftr
+  - [x] gim_lightglue
+- [ ] Training code
+
+> 剩余的开源工作我们还在抓紧进行, 感谢大家的关注.
+
+## 🤗 在线体验
+
+去 [Huggingface](https://huggingface.co/spaces/xuelunshen/gim-online) 在线快速体验我们模型的效果
+
+## ⚙️ 运行环境
+
+我在新服务器上是使用下面的命令进行运行环境的安装.
+
+<p></p>
+<details>
+<summary><b>[ 点击查看运行命令 ]</b></summary>
+
+```bash
+conda install pytorch==1.10.1 torchvision==0.11.2 torchaudio==0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge
+pip install albumentations==1.0.1 --no-binary=imgaug,albumentations
+pip install pytorch-lightning==1.5.10
+pip install opencv-python==4.5.3.56
+pip install imagesize==1.2.0
+pip install kornia==0.6.10
+pip install einops==0.3.0
+pip install loguru==0.5.3
+pip install joblib==1.0.1
+pip install yacs==0.1.8
+pip install h5py==3.1.0
+```
+
+</details>
+<p></p>
+
+## 🔨 使用
+
+1. 克隆本仓库
+
+```bash
+git clone https://github.com/xuelunshen/gim.git
+cd gim
+```
+
+2. 从 [Google Drive](https://drive.google.com/file/d/1gk97V4IROnR1Nprq10W9NCFUv2mxXR_-/view?usp=sharing) 下载 `gim_dkm` 的模型参数
+
+3. 将模型参数放在文件夹 `weights` 里面
+
+4. 运行下面的命令
+
+<p></p>
+<details>
+<summary><b>[ 点击查看运行命令 ]</b></summary>
+
+```bash
+python demo.py --model gim_dkm
+```
+or
+```bash
+python demo.py --model gim_loftr
+```
+or
+```bash
+python demo.py --model gim_lightglue
+```
+
+</details>
+<p></p>
+
+
+5. 代码会将 `assets/demo` 中的 `a1.png` 和 `a2.png` 进行匹配,</br>并且输出 `a1_a2_match.png` 和 `a1_a2_warp.png`
+
+<details>
+<summary>
+<b>
+	[ 点击这里查看
+	<code>a1.png</code>
+	和
+	<code>a2.png</code> ]
+</b>
+</summary>
+<p float="left">
+  <img src="assets/demo/a1.png" width="25%" />
+  <img src="assets/demo/a2.png" width="25%" /> 
+</p>
+</details>
+
+
+
+<details>
+<summary>
+<b>
+	[ 点击这里查看
+	<code>a1_a2_match.png</code> ]
+</b>
+</summary>
+<p align="left">
+	<img src="assets/demo/_a1_a2_match.png" width="50%">
+</p>
+<p><code>a1_a2_match.png</code> 是两张图像匹配的可视化</p>
+</details>
+
+<details>
+<summary>
+<b>
+	[ 点击这里查看
+	<code>a1_a2_warp.png</code> ]
+</b>
+</summary>
+<p align="left">
+	<img src="assets/demo/_a1_a2_warp.png" width="50%">
+</p>
+<p><code>a1_a2_warp.png</code> 是将<code>图像a2</code>用 homography 投影到<code>图像a1</code>的效果</p>
+</details>
+
+<p></p>
+还有更多图像在文件夹 `assets/demo` 中, 大家都可以尝试拿来匹配看看.
+<p></p>
+
+<details>
+<summary>
+<b>
+	[ 点击这里查看更多图像 ]
+</b>
+</summary>
+<p float="left">
+  <img src="assets/demo/b1.png" width="15%" />
+  <img src="assets/demo/b2.png" width="15%" /> 
+  <img src="assets/demo/c1.png" width="15%" />
+  <img src="assets/demo/c2.png" width="15%" /> 
+  <img src="assets/demo/d1.png" width="15%" />
+  <img src="assets/demo/d2.png" width="15%" /> 
+</p>
+</details>
+
+## 📊 ZEB: Zero-shot Evaluation Benchmark
+
+1. 创建一个名为 **`zeb`** 的文件夹
+2. 从[这个网址](https://stuxmueducn-my.sharepoint.com/:f:/g/personal/lizijun_stu_xmu_edu_cn/EmHLjQpbpDRKmiED88rxGl4BFIkSp7vAzXifwXtvVbQA9w?e=ey8WVk)下载 **ZEB** 测试数据的 zip 压缩包, 将其放在刚才创建的 **`zeb`** 文件夹内, 并且解压 zip 压缩包.
+3. 运行下面命令开始测试
+
+<p></p>
+<details>
+<summary><b>[ 点击查看运行命令 ]</b></summary>
+
+下面的数字 **1** 代表你要使用的 gpu 数量,如果你想用 **2** 块gpu, 则将数字 **1** 改为 **2**.
+
+```bash
+sh TEST_GIM_DKM.sh 1
+```
+or
+```bash
+sh TEST_GIM_LOFTR.sh 1
+```
+or
+```bash
+sh TEST_GIM_LIGHTGLUE.sh 1
+```
+or
+```bash
+sh TEST_ROOT_SIFT.sh 1
+```
+</details>
+<p></p>
+
+4. 运行命令 `python check.py` 来检查是否输出全是 `"Good"`.
+5. 运行命令 `python analysis.py --dir dump/zeb --wid gim_dkm --version 100h --verbose` 来取得 **ZEB** 测试结果.
+6. 将 **ZEB** 测试结果粘贴到名为 `zeb.xlsx` 的 Excel 文件中.
+
+<p></p>
+<details>
+<summary><b>[ 点击显示 ZEB 测试结果 ]</b></summary>
+
+> 该表格的数据来自论文提出的 **ZEB**: <u>Zero-shot Evaluation Benchmark for Image Matching</u>, 该 benchmark 由 12 个涵盖各种场景、天气和相机模型的公开数据集组成, 对应了表格中从 GL3 开始的 12 列测试序列.
+
 |      | <div align="left">方法</div>                                 | <div align="left">平均<br />AUC@5°<br />(%) ↑</div> | GL3      | BLE      | ETI      | ETO      | KIT      | WEA      | SEA      | NIG      | MUL      | SCE      | ICL      | GTA      |
 | ---- | ------------------------------------------------------------ | --------------------------------------------------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- |
 |      |                                                              | 传统算法                                            |          |          |          |          |          |          |          |          |          |          |          |          |
@@ -55,121 +236,8 @@
 |      | RoMa (out)                                                   | 48.8                                                | 48.3     | 40.6     | 73.6     | **79.8** | 39.9     | 34.4     | 51.4     | 24.2     | **59.9** | 33.7     | 41.3     | 59.2     |
 |      | **GIM_RoMa**                                                 | ToDO                                                |          |          |          |          |          |          |          |          |          |          |          |          |
 
-> 该表格的数据来自论文提出的 **ZEB**: <u>Zero-shot Evaluation Benchmark for Image Matching</u>, 该 benchmark 由 12 个涵盖各种场景、天气和相机模型的公开数据集组成，对应了表格中从 GL3 开始的 12 列测试序列。我们会尽快公开 **ZEB**。
-
-## ✅ 待办清单
-
-- [ ] Inference code
-  - [ ] gim_roma
-  - [x] gim_dkm
-  - [x] gim_loftr
-  - [x] gim_lightglue
-- [ ] Training code
-
-> 剩余的开源工作我们还在抓紧进行，感谢大家的关注。
-
-## 🤗 在线体验
-
-去 [Huggingface](https://huggingface.co/spaces/xuelunshen/gim-online) 在线快速体验我们模型的效果
-
-## ⚙️ 运行环境
-
-我在新服务器上是使用下面的命令进行运行环境的安装。
-```bash
-conda install pytorch==1.10.1 torchvision==0.11.2 torchaudio==0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge
-pip install albumentations==1.0.1 --no-binary=imgaug,albumentations
-pip install pytorch-lightning==1.5.10
-pip install opencv-python==4.5.3.56
-pip install imagesize==1.2.0
-pip install kornia==0.6.10
-pip install einops==0.3.0
-pip install loguru==0.5.3
-pip install joblib==1.0.1
-pip install yacs==0.1.8
-pip install h5py==3.1.0
-```
-
-## 🔨 使用
-
-克隆本仓库
-
-```bash
-git clone https://github.com/xuelunshen/gim.git
-cd gim
-```
-
-从 [Google Drive](https://drive.google.com/file/d/1gk97V4IROnR1Nprq10W9NCFUv2mxXR_-/view?usp=sharing) 下载 `gim_dkm` 的模型参数
-
-将模型参数放在文件夹 `weights` 里面
-
-运行下面的命令
-```bash
-python demo.py --model gim_dkm
-```
-or
-```bash
-python demo.py --model gim_loftr
-```
-or
-```bash
-python demo.py --model gim_lightglue
-```
-
-代码会将 `assets/demo` 中的 `a1.png` 和 `a2.png` 进行匹配</br>
-输出 `a1_a2_match.png` 和 `a1_a2_warp.png`
-
-<details>
-<summary>
-	点击这里查看
-	<code>a1.png</code>
-	和
-	<code>a2.png</code>.
-</summary>
-<p float="left">
-  <img src="assets/demo/a1.png" width="25%" />
-  <img src="assets/demo/a2.png" width="25%" /> 
-</p>
 </details>
-
-
-
-<details>
-<summary>
-	点击这里查看
-	<code>a1_a2_match.png</code>.
-</summary>
-<p align="left">
-	<img src="assets/demo/_a1_a2_match.png" width="50%">
-</p>
-<p><code>a1_a2_match.png</code> 是两张图像匹配的可视化</p>
-</details>
-
-<details>
-<summary>
-	点击这里查看
-	<code>a1_a2_warp.png</code>.
-</summary>
-<p align="left">
-	<img src="assets/demo/_a1_a2_warp.png" width="50%">
-</p>
-<p><code>a1_a2_warp.png</code> 是将<code>图像a2</code>用 homography 投影到<code>图像a1</code>的效果</p>
-</details>
-
-还有更多图像在文件夹 `assets/demo` 中, 大家都可以尝试拿来匹配看看.
-
-<details>
-<summary>
-	点击这里查看更多图像
-</summary>
-<p float="left">
-  <img src="assets/demo/b1.png" width="15%" />
-  <img src="assets/demo/b2.png" width="15%" /> 
-  <img src="assets/demo/c1.png" width="15%" />
-  <img src="assets/demo/c2.png" width="15%" /> 
-  <img src="assets/demo/d1.png" width="15%" />
-  <img src="assets/demo/d2.png" width="15%" /> 
-</p>
-</details>
+<p></p>
 
 ## 📌 引用
 

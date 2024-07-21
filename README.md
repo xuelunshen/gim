@@ -53,7 +53,7 @@ I set up the running environment on a new machine using the commands listed belo
 
 <p></p>
 <details>
-<summary><b>[ Click to show commands]</b></summary>
+<summary><b>[ Click to show commands ]</b></summary>
 
 ```bash
 conda install pytorch==1.10.1 torchvision==0.11.2 torchaudio==0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge
@@ -89,7 +89,7 @@ cd gim
 
 <p></p>
 <details>
-<summary><b>[ Click to show commands]</b></summary>
+<summary><b>[ Click to show commands ]</b></summary>
 
 ```bash
 python demo.py --model gim_dkm
@@ -180,7 +180,7 @@ There are more images in the `assets/demo` folder, you can try them out.
 
 <p></p>
 <details>
-<summary><b>[ Click to show commands]</b></summary>
+<summary><b>[ Click to show commands ]</b></summary>
 
 The number **1** below represents the number of GPUs you want to use. If you want to use **2 GPUs**, change the number **1** to **2**.
 
@@ -208,7 +208,7 @@ sh TEST_ROOT_SIFT.sh 1
 
 <p></p>
 <details>
-<summary><b>[ Click to show ZEB Result]</b></summary>
+<summary><b>[ Click to show ZEB Result ]</b></summary>
 
 > The data in this table comes from the **ZEB**: <u>Zero-shot Evaluation Benchmark for Image Matching</u> proposed in the paper. This benchmark consists of 12 public datasets that cover a variety of scenes, weather conditions, and camera models, corresponding to the 12 test sequences starting from GL3 in the table.
 
