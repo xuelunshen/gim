@@ -31,6 +31,147 @@
 
 </div>
 
+## ✅ TODO List
+
+- [x] **ZEB**: **Z**ero-shot **E**valuation **B**enchmark
+- [ ] Inference code
+  - [ ] gim_roma
+  - [x] gim_dkm
+  - [x] gim_loftr
+  - [x] gim_lightglue
+- [ ] Training code
+
+> We are actively continuing with the remaining open-source work and appreciate everyone's attention.
+
+## 🤗 Online demo
+
+Go to [Huggingface](https://huggingface.co/spaces/xuelunshen/gim-online) to quickly try our model online.
+
+## ⚙️ Environment
+
+I set up the running environment on a new machine using the commands listed below.
+
+<p></p>
+<details>
+<summary><b>[ Click to show commands]</b></summary>
+
+```bash
+conda install pytorch==1.10.1 torchvision==0.11.2 torchaudio==0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge
+pip install albumentations==1.0.1 --no-binary=imgaug,albumentations
+pip install pytorch-lightning==1.5.10
+pip install opencv-python==4.5.3.56
+pip install imagesize==1.2.0
+pip install kornia==0.6.10
+pip install einops==0.3.0
+pip install loguru==0.5.3
+pip install joblib==1.0.1
+pip install yacs==0.1.8
+pip install h5py==3.1.0
+```
+
+</details>
+<p></p>
+
+## 🔨 Usage
+
+1. Clone the repository
+
+```bash
+git clone https://github.com/xuelunshen/gim.git
+cd gim
+```
+
+2. Download `gim_dkm` model weight from [Google Drive](https://drive.google.com/file/d/1gk97V4IROnR1Nprq10W9NCFUv2mxXR_-/view?usp=sharing)
+
+3. Put it on the folder `weights`
+
+4. Run the following commands
+
+<p></p>
+<details>
+<summary><b>[ Click to show commands]</b></summary>
+
+```bash
+python demo.py --model gim_dkm
+```
+or
+```bash
+python demo.py --model gim_loftr
+```
+or
+```bash
+python demo.py --model gim_lightglue
+```
+
+</details>
+<p></p>
+
+
+5. The code will match `a1.png` and `a2.png` in the folder `assets/demo`,</br>and output `a1_a2_match.png` and `a1_a2_warp.png`.
+
+<details>
+<summary>
+<b>
+	[ Click to show
+	<code>a1.png</code>
+	and
+	<code>a2.png</code> ]
+</b>
+</summary>
+<p float="left">
+  <img src="assets/demo/a1.png" width="25%" />
+  <img src="assets/demo/a2.png" width="25%" /> 
+</p>
+</details>
+
+
+
+<details>
+<summary>
+<b>
+	[ Click to show
+	<code>a1_a2_match.png</code> ]
+</b>
+</summary>
+<p align="left">
+	<img src="assets/demo/_a1_a2_match.png" width="50%">
+</p>
+<p><code>a1_a2_match.png</code> is a visualization of the match between the two images</p>
+</details>
+
+<details>
+<summary>
+<b>
+	[ Click to show
+	<code>a1_a2_warp.png</code> ]
+</b>
+</summary>
+<p align="left">
+	<img src="assets/demo/_a1_a2_warp.png" width="50%">
+</p>
+<p><code>a1_a2_warp.png</code> shows the effect of projecting <code>image a2</code> onto <code>image a1</code> using homography</p>
+</details>
+
+<p></p>
+There are more images in the `assets/demo` folder, you can try them out.
+<p></p>
+
+<details>
+<summary>
+<b>
+	[ Click to show other images ]
+</b>
+</summary>
+<p float="left">
+  <img src="assets/demo/b1.png" width="15%" />
+  <img src="assets/demo/b2.png" width="15%" /> 
+  <img src="assets/demo/c1.png" width="15%" />
+  <img src="assets/demo/c2.png" width="15%" /> 
+  <img src="assets/demo/d1.png" width="15%" />
+  <img src="assets/demo/d2.png" width="15%" /> 
+</p>
+</details>
+
 ## 📊 ZEB: Zero-shot Evaluation Benchmark
 
 1. Create a folder named **`zeb`**.
@@ -39,7 +180,7 @@
 
 <p></p>
 <details>
-<summary><b>[ 🖱️ Click to show commands]</b></summary>
+<summary><b>[ Click to show commands]</b></summary>
 
 The number **1** below represents the number of GPUs you want to use. If you want to use **2 GPUs**, change the number **1** to **2**.
 
@@ -67,7 +208,7 @@ sh TEST_ROOT_SIFT.sh 1
 
 <p></p>
 <details>
-<summary><b>[ 🖱️ Click to show ZEB Result]</b></summary>
+<summary><b>[ Click to show ZEB Result]</b></summary>
 
 > The data in this table comes from the **ZEB**: <u>Zero-shot Evaluation Benchmark for Image Matching</u> proposed in the paper. This benchmark consists of 12 public datasets that cover a variety of scenes, weather conditions, and camera models, corresponding to the 12 test sequences starting from GL3 in the table.
 
@@ -97,119 +238,6 @@ sh TEST_ROOT_SIFT.sh 1
 
 </details>
 <p></p>
-
-## ✅ TODO List
-
-- [ ] Inference code
-  - [ ] gim_roma
-  - [x] gim_dkm
-  - [x] gim_loftr
-  - [x] gim_lightglue
-- [ ] Training code
-
-> We are actively continuing with the remaining open-source work and appreciate everyone's attention.
-
-## 🤗 Online demo
-
-Go to [Huggingface](https://huggingface.co/spaces/xuelunshen/gim-online) to quickly try our model online.
-
-## ⚙️ Environment
-
-I set up the running environment on a new machine using the commands listed below.
-```bash
-conda install pytorch==1.10.1 torchvision==0.11.2 torchaudio==0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge
-pip install albumentations==1.0.1 --no-binary=imgaug,albumentations
-pip install pytorch-lightning==1.5.10
-pip install opencv-python==4.5.3.56
-pip install imagesize==1.2.0
-pip install kornia==0.6.10
-pip install einops==0.3.0
-pip install loguru==0.5.3
-pip install joblib==1.0.1
-pip install yacs==0.1.8
-pip install h5py==3.1.0
-```
-
-## 🔨 Usage
-
-Clone the repository
-
-```bash
-git clone https://github.com/xuelunshen/gim.git
-cd gim
-```
-
-Download `gim_dkm` model weight from [Google Drive](https://drive.google.com/file/d/1gk97V4IROnR1Nprq10W9NCFUv2mxXR_-/view?usp=sharing)
-
-Put it on the folder `weights`
-
-Run the following command
-```bash
-python demo.py --model gim_dkm
-```
-or
-```bash
-python demo.py --model gim_loftr
-```
-or
-```bash
-python demo.py --model gim_lightglue
-```
-
-The code will match `a1.png` and `a2.png` in the folder `assets/demo`</br>, and output `a1_a2_match.png` and `a1_a2_warp.png`.
-
-<details>
-<summary>
-	Click to show
-	<code>a1.png</code>
-	and
-	<code>a2.png</code>.
-</summary>
-<p float="left">
-  <img src="assets/demo/a1.png" width="25%" />
-  <img src="assets/demo/a2.png" width="25%" /> 
-</p>
-</details>
-
-
-
-<details>
-<summary>
-	Click to show
-	<code>a1_a2_match.png</code>.
-</summary>
-<p align="left">
-	<img src="assets/demo/_a1_a2_match.png" width="50%">
-</p>
-<p><code>a1_a2_match.png</code> is a visualization of the match between the two images</p>
-</details>
-
-<details>
-<summary>
-	Click to show
-	<code>a1_a2_warp.png</code>.
-</summary>
-<p align="left">
-	<img src="assets/demo/_a1_a2_warp.png" width="50%">
-</p>
-<p><code>a1_a2_warp.png</code> shows the effect of projecting <code>image a2</code> onto <code>image a1</code> using homography</p>
-</details>
-
-There are more images in the `assets/demo` folder, you can try them out.
-
-<details>
-<summary>
-	Click to show other images.
-</summary>
-<p float="left">
-  <img src="assets/demo/b1.png" width="15%" />
-  <img src="assets/demo/b2.png" width="15%" /> 
-  <img src="assets/demo/c1.png" width="15%" />
-  <img src="assets/demo/c2.png" width="15%" /> 
-  <img src="assets/demo/d1.png" width="15%" />
-  <img src="assets/demo/d2.png" width="15%" /> 
-</p>
-</details>
 
 ## 📌 Citation
 
