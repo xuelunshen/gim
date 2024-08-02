@@ -81,7 +81,7 @@ git clone https://github.com/xuelunshen/gim.git
 cd gim
 ```
 
-2. 从 [Google Drive](https://drive.google.com/file/d/1gk97V4IROnR1Nprq10W9NCFUv2mxXR_-/view?usp=sharing) 下载 `gim_dkm` 的模型参数
+2. 从 [Google Drive](https://drive.google.com/file/d/1gk97V4IROnR1Nprq10W9NCFUv2mxXR_-/view?usp=sharing) 或者 [OneDrive](https://stuxmueducn-my.sharepoint.com/:u:/g/personal/xuelun_stu_xmu_edu_cn/EdJOibZ8VABOoKoyOHWo8ZEBHd_MyHbSvhRyT_o40SIPGA?e=GCjGZE) 下载 `gim_dkm` 的模型参数
 
 3. 将模型参数放在文件夹 `weights` 里面
 
