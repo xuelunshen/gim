@@ -241,6 +241,14 @@ sh TEST_ROOT_SIFT.sh 1
 </details>
 <p></p>
 
+## 🖼️ Poster
+
+<div align="center">
+	<a href="https://www.youtube.com/embed/FU_MJLD8LeY">
+		<img src="assets/demo/poster.png" width="50%" alt="Overview Video">
+	</a>
+</div>
+
 ## 📌 Citation
 
 If the paper and code from `gim` help your research, we kindly ask you to give a citation to our paper ❤️. Additionally, if you appreciate our work and find this repository useful, giving it a star ⭐️ would be a wonderful way to support our work. Thank you very much.

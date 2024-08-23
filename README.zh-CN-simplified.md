@@ -241,6 +241,14 @@ sh TEST_ROOT_SIFT.sh 1
 </details>
 <p></p>
 
+## 🖼️ 海报
+
+<div align="center">
+	<a href="https://www.youtube.com/embed/FU_MJLD8LeY">
+		<img src="assets/demo/poster.png" width="50%" alt="Overview Video">
+	</a>
+</div>
+
 ## 📌 引用
 
 如果我们的代码对你的研究有帮助, 请给我们的论文一个引用 ❤️ 并给 gim 的仓库点个小星星 ⭐️ 吧, 多谢啦～
