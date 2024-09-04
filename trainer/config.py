@@ -9,7 +9,7 @@ _CN = CN()
 # Trainer
 # ------------
 _CN.TRAINER = CN()
-_CN.TRAINER.SEED = 19940703
+_CN.TRAINER.SEED = 3407
 _CN.TRAINER.NUM_SANITY_VAL_STEPS = -1
 _CN.TRAINER.LOG_INTERVAL = 20
 _CN.TRAINER.VAL_CHECK_INTERVAL = 1.0 # default 1.0, if we set 2.0 will val each 2 step

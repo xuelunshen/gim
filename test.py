@@ -17,8 +17,8 @@ from pytorch_lightning.loggers import TensorBoardLogger
 import tools as com
 
 from trainer import Trainer
-from loftr.configs.outdoor import trainer_cfg, network_cfg
-from loftr.config import get_cfg_defaults as get_network_cfg
+from networks.loftr.configs.outdoor import trainer_cfg, network_cfg
+from networks.loftr.config import get_cfg_defaults as get_network_cfg
 from trainer.config import get_cfg_defaults as get_trainer_cfg
 from trainer.debug import get_cfg_defaults as get_debug_cfg
 

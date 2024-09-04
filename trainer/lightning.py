@@ -27,7 +27,7 @@ class Trainer(pl.LightningModule):
 
         detector = model = None
         if pcfg.weight == 'gim_dkm':
-            from dkm.models.model_zoo.DKMv3 import DKMv3
+            from networks.dkm.models.model_zoo.DKMv3 import DKMv3
             detector = None
             model = DKMv3(None, 540, 720, upsample_preds=True)
             model.h_resized = 660
@@ -36,7 +36,7 @@ class Trainer(pl.LightningModule):
             model.upsample_res = (1152, 1536)
             model.use_soft_mutual_nearest_neighbours = False
         elif pcfg.weight == 'gim_loftr':
-            from loftr.loftr import LoFTR as MODEL
+            from networks.loftr.loftr import LoFTR as MODEL
             detector = None
             model = MODEL(ncfg['loftr'])
         elif pcfg.weight == 'gim_lightglue':

@@ -10,13 +10,13 @@ import matplotlib.pyplot as plt
 import torchvision.transforms.functional as F
 
 from os.path import join
-
-from loftr.loftr import LoFTR
-from loftr.misc import lower_config
-from loftr.config import get_cfg_defaults
-from dkm.models.model_zoo.DKMv3 import DKMv3
-from gluefactory.superpoint import SuperPoint
-from gluefactory.models.matchers.lightglue import LightGlue
+from tools import get_padding_size
+from networks.loftr.loftr import LoFTR
+from networks.loftr.misc import lower_config
+from networks.loftr.config import get_cfg_defaults
+from networks.dkm.models.model_zoo.DKMv3 import DKMv3
+from networks.lightglue.superpoint import SuperPoint
+from networks.lightglue.models.matchers.lightglue import LightGlue
 
 DEFAULT_MIN_NUM_MATCHES = 4
 DEFAULT_RANSAC_MAX_ITER = 10000
@@ -406,13 +406,18 @@ if __name__ == '__main__':
     data = dict(color0=image0, color1=image1, image0=image0, image1=image1)
 
     if args.model == 'gim_dkm':
+        orig_width0, orig_height0, pad_left0, pad_right0, pad_top0, pad_bottom0 = get_padding_size(image0, 672, 896)
+        orig_width1, orig_height1, pad_left1, pad_right1, pad_top1, pad_bottom1 = get_padding_size(image1, 672, 896)
+        image0_ = torch.nn.functional.pad(image0, (pad_left0, pad_right0, pad_top0, pad_bottom0))
+        image1_ = torch.nn.functional.pad(image1, (pad_left1, pad_right1, pad_top1, pad_bottom1))
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            dense_matches, dense_certainty = model.match(image0, image1)
+            dense_matches, dense_certainty = model.match(image0_, image1_)
             sparse_matches, mconf = model.sample(dense_matches, dense_certainty, 5000)
 
-        height0, width0 = image0.shape[-2:]
-        height1, width1 = image1.shape[-2:]
+        height0, width0 = image0_.shape[-2:]
+        height1, width1 = image1_.shape[-2:]
 
         kpts0 = sparse_matches[:, :2]
         kpts0 = torch.stack((
@@ -421,6 +426,24 @@ if __name__ == '__main__':
         kpts1 = torch.stack((
             width1 * (kpts1[:, 0] + 1) / 2, height1 * (kpts1[:, 1] + 1) / 2), dim=-1,)
         b_ids = torch.where(mconf[None])[0]
+
+        # before padding
+        kpts0 -= kpts0.new_tensor((pad_left0, pad_top0))[None]
+        kpts1 -= kpts1.new_tensor((pad_left1, pad_top1))[None]
+        mask_ = (kpts0[:, 0] > 0) & \
+               (kpts0[:, 1] > 0) & \
+               (kpts1[:, 0] > 0) & \
+               (kpts1[:, 1] > 0)
+        mask_ = mask_ & \
+               (kpts0[:, 0] <= (orig_width0 - 1)) & \
+               (kpts1[:, 0] <= (orig_width1 - 1)) & \
+               (kpts0[:, 1] <= (orig_height0 - 1)) & \
+               (kpts1[:, 1] <= (orig_height1 - 1))
+
+        mconf = mconf[mask_]
+        b_ids = b_ids[mask_]
+        kpts0 = kpts0[mask_]
+        kpts1 = kpts1[mask_]
 
     elif args.model == 'gim_loftr':
         with torch.no_grad():

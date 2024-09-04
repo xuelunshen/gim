@@ -36,6 +36,7 @@
 ## ✅ TODO List
 
 - [x] **ZEB**: **Z**ero-shot **E**valuation **B**enchmark
+- [x] 3D Reconstruction
 - [ ] Inference code
   - [ ] gim_roma
   - [x] gim_dkm
@@ -174,6 +175,28 @@ There are more images in the `assets/demo` folder, you can try them out.
 </p>
 </details>
 
+## 🕋 3D Reconstruction
+
+The code for 3D reconstruction in this repository is implemented based on [hloc](https://github.com/cvg/Hierarchical-Localization). 
+
+First, install [colmap](https://colmap.github.io/) and [pycolmap](https://github.com/colmap/pycolmap) according to hloc's README.
+
+Then, download the model parameters from [semantic-segmentation-pytorch](https://github.com/CSAILVision/semantic-segmentation-pytorch) from [Google Drive](https://drive.google.com/file/d/1YswCj58VuVhqEpMKQ_k0QJb3_mMdpF8M/view?usp=sharing) or [OneDrive](https://stuxmueducn-my.sharepoint.com/:u:/g/personal/xuelun_stu_xmu_edu_cn/EUR_XMay5b5FtWelmqXiLi4Bcnv4G1w5b2aYjhqS-Ds_ow) and put the model parameters in the folder `weights`.
+
+Next, create some folders. If you want to reconstruct a room in 3D, run the following command:
+
+```bash
+mkdir -p inputs/room/images
+```
+
+Then, put images of the room to be reconstructed in 3D into the `images` folder.
+
+Finally, run the following command to perform a 3D reconstruction:
+
+```bash
+sh reconstruction.sh room
+```
+
 ## 📊 ZEB: Zero-shot Evaluation Benchmark
 
 1. Create a folder named **`zeb`**.
@@ -210,7 +233,7 @@ sh TEST_ROOT_SIFT.sh 1
 
 <p></p>
 <details>
-<summary><b>[ Click to show ZEB Result ]</b></summary>
+<summary><b><font color="red">[ Click to show 📊 ZEB Result ]</font></b></summary>
 
 > The data in this table comes from the **ZEB**: <u>Zero-shot Evaluation Benchmark for Image Matching</u> proposed in the paper. This benchmark consists of 12 public datasets that cover a variety of scenes, weather conditions, and camera models, corresponding to the 12 test sequences starting from GL3 in the table.
 

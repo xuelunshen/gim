@@ -36,6 +36,7 @@
 ## ✅ 待办清单
 
 - [x] **ZEB**: **Z**ero-shot **E**valuation **B**enchmark
+- [x] 3D Reconstruction
 - [ ] Inference code
   - [ ] gim_roma
   - [x] gim_dkm
@@ -74,7 +75,7 @@ pip install h5py==3.1.0
 </details>
 <p></p>
 
-## 🔨 使用
+## 🔨 如何使用
 
 1. 克隆本仓库
 
@@ -174,6 +175,28 @@ python demo.py --model gim_lightglue
 </p>
 </details>
 
+## 🕋 三维重建
+
+本仓库三维重建的代码是基于 [hloc](https://github.com/cvg/Hierarchical-Localization) 实现.
+
+首先, 按照 hloc 的 README 安装 [colmap](https://colmap.github.io/) 和 [pycolmap](https://github.com/colmap/pycolmap).
+
+然后, 从 [Google Drive](https://drive.google.com/file/d/1YswCj58VuVhqEpMKQ_k0QJb3_mMdpF8M/view?usp=sharing) 或者 [OneDrive](https://stuxmueducn-my.sharepoint.com/:u:/g/personal/xuelun_stu_xmu_edu_cn/EUR_XMay5b5FtWelmqXiLi4Bcnv4G1w5b2aYjhqS-Ds_ow) 下载来自 [semantic-segmentation-pytorch](https://github.com/CSAILVision/semantic-segmentation-pytorch) 的模型参数, 将模型参数放在文件夹 `weights` 里面.
+
+接着, 创建一些文件夹, 假如想要对房间做三维重建, 运行下面的命令:
+
+```bash
+mkdir -p inputs/room/images
+```
+
+然后, 将要进行三维重建的若干张房间图片放到 `images` 文件夹内.
+
+最后运行下面的命令即可进行三维重建:
+
+```bash
+sh reconstruction.sh room
+```
+
 ## 📊 ZEB: Zero-shot Evaluation Benchmark
 
 1. 创建一个名为 **`zeb`** 的文件夹
@@ -210,7 +233,7 @@ sh TEST_ROOT_SIFT.sh 1
 
 <p></p>
 <details>
-<summary><b>[ 点击显示 ZEB 测试结果 ]</b></summary>
+<summary><b><font color="red">[ 点击显示 📊 ZEB 测试结果 ]</font></b></summary>
 
 > 该表格的数据来自论文提出的 **ZEB**: <u>Zero-shot Evaluation Benchmark for Image Matching</u>, 该 benchmark 由 12 个涵盖各种场景、天气和相机模型的公开数据集组成, 对应了表格中从 GL3 开始的 12 列测试序列.
 
