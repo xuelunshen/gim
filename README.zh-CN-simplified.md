@@ -197,6 +197,10 @@ mkdir -p inputs/room/images
 sh reconstruction.sh room
 ```
 
+> Tips:\
+> 目前三维重建的代码默认会将所有图片两两配对, 然后进行图像匹配和重建\
+> 为了更好的重建结果, 建议根据实际情况修改代码, 对配对图片进行调整.
+
 ## 📊 ZEB: Zero-shot Evaluation Benchmark
 
 1. 创建一个名为 **`zeb`** 的文件夹

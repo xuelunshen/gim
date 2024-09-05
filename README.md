@@ -181,7 +181,7 @@ The code for 3D reconstruction in this repository is implemented based on [hloc]
 
 First, install [colmap](https://colmap.github.io/) and [pycolmap](https://github.com/colmap/pycolmap) according to hloc's README.
 
-Then, download the model parameters from [semantic-segmentation-pytorch](https://github.com/CSAILVision/semantic-segmentation-pytorch) from [Google Drive](https://drive.google.com/file/d/1YswCj58VuVhqEpMKQ_k0QJb3_mMdpF8M/view?usp=sharing) or [OneDrive](https://stuxmueducn-my.sharepoint.com/:u:/g/personal/xuelun_stu_xmu_edu_cn/EUR_XMay5b5FtWelmqXiLi4Bcnv4G1w5b2aYjhqS-Ds_ow) and put the model parameters in the folder `weights`.
+Then, download the [semantic-segmentation](https://github.com/CSAILVision/semantic-segmentation-pytorch)'s model parameters from [Google Drive](https://drive.google.com/file/d/1YswCj58VuVhqEpMKQ_k0QJb3_mMdpF8M/view?usp=sharing) or [OneDrive](https://stuxmueducn-my.sharepoint.com/:u:/g/personal/xuelun_stu_xmu_edu_cn/EUR_XMay5b5FtWelmqXiLi4Bcnv4G1w5b2aYjhqS-Ds_ow) and put the model parameters in the folder `weights`.
 
 Next, create some folders. If you want to reconstruct a room in 3D, run the following command:
 
@@ -196,6 +196,10 @@ Finally, run the following command to perform a 3D reconstruction:
 ```bash
 sh reconstruction.sh room
 ```
+
+> Tips:\
+> At present, the code for 3D reconstruction defaults to pairing all images pairwise, and then performing image matching and reconstruction,\
+> For better reconstruction results, it is recommended to modify the code according to the actual situation and adjust the paired images.
 
 ## 📊 ZEB: Zero-shot Evaluation Benchmark
 
