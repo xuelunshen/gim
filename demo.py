@@ -302,9 +302,9 @@ def plot_images(imgs, titles=None, cmaps="gray", dpi=100, size=5, pad=0.5):
 def fig2im(fig):
     fig.canvas.draw()
     w, h = fig.canvas.get_width_height()
-    buf_ndarray = np.frombuffer(fig.canvas.tostring_rgb(), dtype="u1")
+    buf_ndarray = np.frombuffer(fig.canvas.buffer_rgba(), dtype="u1")
     # noinspection PyArgumentList
-    im = buf_ndarray.reshape(h, w, 3)
+    im = buf_ndarray.reshape(h, w, 4)
     return im
 
 
