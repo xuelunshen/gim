@@ -277,7 +277,7 @@ sh TEST_ROOT_SIFT.sh 1
 ## 🖼️ Poster
 
 <div align="center">
-	<a href="https://www.youtube.com/embed/FU_MJLD8LeY">
+	<a href="https://raw.githubusercontent.com/xuelunshen/gim/main/assets/demo/poster.png">
 		<img src="assets/demo/poster.png" width="50%" alt="Overview Video">
 	</a>
 </div>

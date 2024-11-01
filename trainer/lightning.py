@@ -40,8 +40,8 @@ class Trainer(pl.LightningModule):
             detector = None
             model = MODEL(ncfg['loftr'])
         elif pcfg.weight == 'gim_lightglue':
-            from gluefactory.superpoint import SuperPoint
-            from gluefactory.models.matchers.lightglue import LightGlue
+            from networks.lightglue.superpoint import SuperPoint
+            from networks.lightglue.models.matchers.lightglue import LightGlue
             detector = SuperPoint({
                 'max_num_keypoints': 2048,
                 'force_num_keypoints': True,
