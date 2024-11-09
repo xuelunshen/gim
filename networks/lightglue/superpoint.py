@@ -169,6 +169,7 @@ class SuperPoint(BaseModel):
         "legacy_sampling": True,  # True to use the old broken sampling
     }
     required_data_keys = ["image"]
+    detection_noise = 2.0
 
     # checkpoint_url = "https://github.com/magicleap/SuperGluePretrainedNetwork/raw/master/models/weights/superpoint_v1.pth"  # noqa: E501
 
@@ -204,6 +205,7 @@ class SuperPoint(BaseModel):
 
     def _forward(self, data):
         image = data["image"]
+        data["image_size"] = torch.tensor(image.shape[-2:][::-1])[None]
         if image.shape[1] == 3:  # RGB
             scale = image.new_tensor([0.299, 0.587, 0.114]).view(1, 3, 1, 1)
             image = (image * scale).sum(1, keepdim=True)

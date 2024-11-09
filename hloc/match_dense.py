@@ -23,7 +23,7 @@ from .extract_features import read_image, resize_image
 from .utils.io import list_h5_names
 
 confs = {
-    'gim': {
+    'gim_dkm': {
         'output': 'matches-gim',
         'model': {
             'name': 'dkm',

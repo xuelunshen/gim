@@ -40,7 +40,7 @@ class LoFTR(BaseModel):
 
     def _forward(self, data):
         outputs = Path(os.environ['GIMRECONSTRUCTION'])
-        segment_root = outputs / 'segment'
+        segment_root = outputs / '..' / 'segment'
 
         # For consistency with hloc pairs, we refine kpts in image0!
         rename = {

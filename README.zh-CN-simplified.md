@@ -102,13 +102,9 @@ cd gim
 
 ```bash
 python demo.py --model gim_dkm
-```
-or
-```bash
+# or
 python demo.py --model gim_loftr
-```
-or
-```bash
+# or
 python demo.py --model gim_lightglue
 ```
 
@@ -200,7 +196,9 @@ mkdir -p inputs/room/images
 最后运行下面的命令即可进行三维重建:
 
 ```bash
-sh reconstruction.sh room
+sh reconstruction.sh room gim_dkm
+# or
+sh reconstruction.sh room gim_lightglue
 ```
 
 > Tips:\
@@ -221,17 +219,11 @@ sh reconstruction.sh room
 
 ```bash
 sh TEST_GIM_DKM.sh 1
-```
-or
-```bash
+# or
 sh TEST_GIM_LOFTR.sh 1
-```
-or
-```bash
+# or
 sh TEST_GIM_LIGHTGLUE.sh 1
-```
-or
-```bash
+# or
 sh TEST_ROOT_SIFT.sh 1
 ```
 </details>

@@ -476,14 +476,13 @@ if __name__ == '__main__':
         with torch.no_grad():
             pred.update({k + '0': v for k, v in detector({
                 "image": data["gray0"],
-                "image_size": data["size0"],
             }).items()})
             pred.update({k + '1': v for k, v in detector({
                 "image": data["gray1"],
-                "image_size": data["size1"],
             }).items()})
             pred.update(model({**pred, **data,
-                               **{'resize0': data['size0'], 'resize1': data['size1']}}))
+                               **{'image_size0': data['size0'],
+                                  'image_size1': data['size1']}}))
 
         kpts0 = torch.cat([kp * s for kp, s in zip(pred['keypoints0'], data['scale0'][:, None])])
         kpts1 = torch.cat([kp * s for kp, s in zip(pred['keypoints1'], data['scale1'][:, None])])

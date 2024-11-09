@@ -27,11 +27,11 @@ line using their name. Each is a dictionary with the following entries:
 '''
 confs = {
     'gim_superpoint': {
-        'output': 'feats-gim-superpoint-n4096-r1024',
+        'output': 'feats-gim-superpoint-n2048-r1920',
         'model': {
             'name': 'superpoint',
             'nms_radius': 3,
-            'max_keypoints': 8192,
+            'max_keypoints': 2048,
         },
         'preprocessing': {
             'grayscale': True,
@@ -245,7 +245,8 @@ def main(conf: Dict,
          as_half: bool = True,
          image_list: Optional[Union[Path, List[str]]] = None,
          feature_path: Optional[Path] = None,
-         overwrite: bool = False) -> Path:
+         overwrite: bool = False,
+         model=None) -> Path:
     logger.info('Extracting local features with configuration:'
                 f'\n{pprint.pformat(conf)}')
 
@@ -261,8 +262,10 @@ def main(conf: Dict,
         return feature_path
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    Model = dynamic_load(extractors, conf['model']['name'])
-    model = Model(conf['model']).eval().to(device)
+    if model is None:
+        Model = dynamic_load(extractors, conf['model']['name'])
+        model = Model(conf['model'])
+    model = model.eval().to(device)
 
     loader = torch.utils.data.DataLoader(
         dataset, num_workers=1, shuffle=False, pin_memory=True)

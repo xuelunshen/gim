@@ -21,12 +21,16 @@ line using their name. Each is a dictionary with the following entries:
     - model: the model configuration, as passed to a feature matcher.
 '''
 confs = {
-    'gim_superglue': {
-        'output': 'matches-gim-superglue',
+    'gim_lightglue': {
+        'output': 'matches-gim-lightglue',
         'model': {
-            'name': 'superglue',
-            'weights': 'GIM_SUPERGLUE_50h',
-            'sinkhorn_iterations': 50,
+            'name': 'lightglue',
+            'weights': 'gim_lightglue_100h',
+        },
+        'preprocessing': {  # for segmentation
+            'grayscale': False,
+            'resize_max': None,
+            'dfactor': 1
         },
     },
     'superpoint+lightglue': {
@@ -161,7 +165,8 @@ def main(conf: Dict,
          export_dir: Optional[Path] = None,
          matches: Optional[Path] = None,
          features_ref: Optional[Path] = None,
-         overwrite: bool = False) -> Path:
+         overwrite: bool = False,
+         model = None) -> Path:
 
     if isinstance(features, Path) or Path(features).exists():
         features_q = features
@@ -179,7 +184,7 @@ def main(conf: Dict,
 
     if features_ref is None:
         features_ref = features_q
-    match_from_paths(conf, pairs, matches, features_q, features_ref, overwrite)
+    match_from_paths(conf, pairs, matches, features_q, features_ref, overwrite, model=model)
 
     return matches
 
@@ -211,7 +216,8 @@ def match_from_paths(conf: Dict,
                      match_path: Path,
                      feature_path_q: Path,
                      feature_path_ref: Path,
-                     overwrite: bool = False) -> Path:
+                     overwrite: bool = False,
+                     model = None) -> Path:
     logger.info('Matching local features with configuration:'
                 f'\n{pprint.pformat(conf)}')
 
@@ -230,8 +236,10 @@ def match_from_paths(conf: Dict,
         return
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    Model = dynamic_load(matchers, conf['model']['name'])
-    model = Model(conf['model']).eval().to(device)
+    if model is None:
+        Model = dynamic_load(matchers, conf['model']['name'])
+        model = Model(conf['model'])
+    model = model.eval().to(device)
 
     dataset = FeaturePairsDataset(pairs, feature_path_q, feature_path_ref)
     loader = torch.utils.data.DataLoader(
