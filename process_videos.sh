@@ -1,5 +1,9 @@
 #!/bin/bash
 
+mkdir logs
+mkdir -p data/ZeroMatch/pseudo
+mkdir -p data/ZeroMatch/video_1080p
+
 function select_gpu() {
   while true; do
     readarray -t total_memory < <(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits)
