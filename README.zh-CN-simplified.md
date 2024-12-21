@@ -36,13 +36,14 @@
 ## ✅ 待办清单
 
 - [x] **ZEB**: **Z**ero-shot **E**valuation **B**enchmark
-- [x] 3D Reconstruction
-- [ ] Inference code
+- [x] 视频处理代码
+- [x] 三维重建
+- [ ] 推理代码
   - [ ] gim_roma
   - [x] gim_dkm
   - [x] gim_loftr
   - [x] gim_lightglue
-- [ ] Training code
+- [ ] 训练代码
 
 > 剩余的开源工作我们还在抓紧进行, 感谢大家的关注.
 
@@ -81,7 +82,7 @@ pip install triton
 </details>
 <p></p>
 
-## 🔨 如何使用
+## 🔨 如何使用 `GIM` 系列的匹配网络
 
 1. 克隆本仓库
 
@@ -176,6 +177,13 @@ python demo.py --model gim_lightglue
   <img src="assets/demo/d2.png" width="15%" /> 
 </p>
 </details>
+
+## 🎞️ 视频处理
+> 因为一些原因, 我们不能提供具体使用了哪些 Youtube 视频进行训练, 我可以告诉大家的是, 用关键词 `walk in` 或者 `walk through` 去 YouTube 搜索相关视频. 用来处理的视频需要是拍摄后没有经过任何处理的. 不要有剪辑, 不要有转场, 不要有特效等等. 下面我介绍一下整个流程.
+
+1. 将你要处理的 YouTube 视频的 id 粘贴到 `video_list.txt` 文件中. 比如视频 `https://www.youtube.com/watch?v=FU_MJLD8LeY` 的 id 就是 `FU_MJLD8LeY`. 现在 video_list.txt 文件内已经粘贴了一个示例视频. 你现在可以先什么都不用做, 直接进入第二步.
+2. 用命令 `chmod +x process_videos.sh` 赋予 `process_videos.sh` 文件执行权限
+3. 用命令 `./process_videos.sh` 运行视频处理代码
 
 ## 🕋 三维重建
 

@@ -36,6 +36,7 @@
 ## ✅ TODO List
 
 - [x] **ZEB**: **Z**ero-shot **E**valuation **B**enchmark
+- [x] Video Preprocess Code
 - [x] 3D Reconstruction
 - [ ] Inference code
   - [ ] gim_roma
@@ -81,7 +82,7 @@ pip install triton
 </details>
 <p></p>
 
-## 🔨 Usage
+## 🔨 How to Use the `GIM` Series Matching Network
 
 1. Clone the repository
 
@@ -176,6 +177,13 @@ There are more images in the `assets/demo` folder, you can try them out.
   <img src="assets/demo/d2.png" width="15%" /> 
 </p>
 </details>
+
+## Video Preprocess
+> Because of some reasons, we cannot provide specific YouTube videos used for training, but I can tell you that using the keywords `walk in` or `walk through` to search on YouTube will find relevant videos. The videos used for processing need to be shot without any processing. There should be no editing, no transitions, no special effects, etc. Below, I will introduce the entire process.
+
+1. Put the id of the YouTube video you want to process into the `video_list.txt` file. For example, the id of the video `https://www.youtube.com/watch?v=FU_MJLD8LeY` is `FU_MJLD8LeY`. Now the `video_list.txt` file already contains an example video. You can do nothing now and directly enter the second step.
+2. Use the command `chmod +x process_videos.sh` to give the `process_videos.sh` file execution permission
+3. Use the command `./process_videos.sh` to run the video processing code
 
 ## 🕋 3D Reconstruction
 

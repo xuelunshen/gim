@@ -17,8 +17,8 @@ from copy import deepcopy
 from os.path import join, exists
 from torch.utils.data import DataLoader
 
-from video_streamer import VideoStreamer
-from video_loader import WALKDataset, collate_fn
+from datasets.walk.video_streamer import VideoStreamer
+from datasets.walk.video_loader import WALKDataset, collate_fn
 
 from networks.mit_semseg.models import ModelBuilder, SegmentationModule
 
