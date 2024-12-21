@@ -13,7 +13,7 @@ from albumentations.augmentations import functional as F
 from datasets.utils import get_divisible_wh
 
 
-def fast_make_matching_robust_fitting_figure(data, b_id=0):
+def fast_make_matching_robust_fitting_figure(data, b_id=0, transpose=False):
     robust_fitting = True if 'inliers' in list(data.keys()) and data['inliers'] is not None else False
 
     gray0 = (data['image0'][b_id][0].cpu().numpy() * 255).round().astype(np.uint8)
@@ -25,9 +25,23 @@ def fast_make_matching_robust_fitting_figure(data, b_id=0):
         kpts0 = kpts0 / data['scale0'][b_id].cpu().numpy()
         kpts1 = kpts1 / data['scale1'][b_id].cpu().numpy()
 
+    if transpose:
+        gray0 = cv2.rotate(gray0, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        gray1 = cv2.rotate(gray1, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        
+        h0, w0 = data['hw0_i']
+        h1, w1 = data['hw1_i']
+        kpts0_new = np.copy(kpts0)
+        kpts1_new = np.copy(kpts1)
+        kpts0_new[:, 0], kpts0_new[:, 1] = kpts0[:, 1], w0 - kpts0[:, 0]
+        kpts1_new[:, 0], kpts1_new[:, 1] = kpts1[:, 1], w1 - kpts1[:, 0]
+        kpts0, kpts1 = kpts0_new, kpts1_new
+        (h0, w0), (h1, w1) = (w0, h0), (w1, h1)
+    else:
+        (h0, w0), (h1, w1) = data['hw0_i'], data['hw1_i']
+
     rows = 3
     margin = 2
-    (h0, w0), (h1, w1) = data['hw0_i'], data['hw1_i']
     h, w = max(h0, h1), max(w0, w1)
     H, W = margin * (rows + 1) + h * rows, margin * 3 + w * 2
 
@@ -39,8 +53,11 @@ def fast_make_matching_robust_fitting_figure(data, b_id=0):
     out = np.stack([out] * 3, -1)
 
     sh = hx(row=1)
-    color0 = (data['color0'][b_id].permute(1, 2, 0).cpu().numpy() * 255).round().astype(np.uint8)  # (rH, rW, 3)
-    color1 = (data['color1'][b_id].permute(1, 2, 0).cpu().numpy() * 255).round().astype(np.uint8)  # (rH, rW, 3)
+    color0 = (data['color0'][b_id].permute(1, 2, 0).cpu().numpy() * 255).round().astype(np.uint8)
+    color1 = (data['color1'][b_id].permute(1, 2, 0).cpu().numpy() * 255).round().astype(np.uint8)
+    if transpose:
+        color0 = cv2.rotate(color0, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        color1 = cv2.rotate(color1, cv2.ROTATE_90_COUNTERCLOCKWISE)
     out[sh: sh + h0, wx[0]: wx[1]] = color0
     out[sh: sh + h1, wx[2]: wx[3]] = color1
 
@@ -89,8 +106,9 @@ def fast_make_matching_robust_fitting_figure(data, b_id=0):
         'Pair ID: {}'.format(data['pair_id'][b_id]),
         'co-visible: {:.4f}/{:.4f}'.format(data['covisible0'],
                                            data['covisible1']),
-        'Image sizes: {} - {}'.format(data['imsize0'][b_id],
-                                      data['imsize1'][b_id]),
+        'Image sizes: {} - {}'.format(
+            tuple(reversed(data['imsize0'][b_id])) if transpose and isinstance(data['imsize0'][b_id], (list, tuple, np.ndarray)) and len(data['imsize0'][b_id]) >= 2 else data['imsize0'][b_id],
+            tuple(reversed(data['imsize1'][b_id])) if transpose and isinstance(data['imsize1'][b_id], (list, tuple, np.ndarray)) and len(data['imsize1'][b_id]) >= 2 else data['imsize1'][b_id]),
         'Pair names: {}:{}'.format(data['pair_names'][0].split('/')[-1],
                                    data['pair_names'][1].split('/')[-1]),
         'Rand Scale: {} - {}'.format(data['rands0'],
@@ -99,6 +117,7 @@ def fast_make_matching_robust_fitting_figure(data, b_id=0):
                                  data['offset1'].cpu().numpy()),
         'Fliped: {} - {}'.format(data['hflip0'],
                                  data['hflip1']),
+        'Transposed: {}'.format(transpose)
     ]
     sc = min(H / 1280., 1.0)
     Ht = int(18 * sc)  # text height

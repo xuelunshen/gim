@@ -179,11 +179,27 @@ python demo.py --model gim_lightglue
 </details>
 
 ## 🎞️ 视频处理
+### 不需要三维重建即可得到视频图像帧之间可靠的像素对应关系
 > 因为一些原因, 我们不能提供具体使用了哪些 Youtube 视频进行训练, 我可以告诉大家的是, 用关键词 `walk in` 或者 `walk through` 去 YouTube 搜索相关视频. 用来处理的视频需要是拍摄后没有经过任何处理的. 不要有剪辑, 不要有转场, 不要有特效等等. 下面我介绍一下整个流程.
 
-1. 将你要处理的 YouTube 视频的 id 粘贴到 `video_list.txt` 文件中. 比如视频 `https://www.youtube.com/watch?v=FU_MJLD8LeY` 的 id 就是 `FU_MJLD8LeY`. 现在 video_list.txt 文件内已经粘贴了一个示例视频. 你现在可以先什么都不用做, 直接进入第二步.
+1. 将你要处理的 YouTube 视频的 id 粘贴到 `video_list.txt` 文件中. 比如视频 `https://www.youtube.com/watch?v=Od-rKbC30TM` 的 id 就是 `Od-rKbC30TM`. 现在 video_list.txt 文件内已经粘贴了这个示例视频. 你现在可以先什么都不用做, 直接进入第二步.
 2. 用命令 `chmod +x process_videos.sh` 赋予 `process_videos.sh` 文件执行权限
 3. 用命令 `./process_videos.sh` 运行视频处理代码
+4. 用命令 `python -m datasets.walk.propagate Od-rKbC30TM` 运行视频处理代码
+5. 用命令 `python -m datasets.walk.walk Od-rKbC30TM` 运行可视化代码
+
+> 处理结果和中间文件位于 `data/ZeroMatch` 文件夹内, 可视化结果在 `dump/walk` 文件夹内. 不出意外你可以看到类似下方图片的处理结果(点击展开图像).
+
+<details>
+<summary>
+<b>
+	[ 点击这里查看视频处理可视化结果 ]
+</b>
+</summary>
+<p align="left">
+	<img src="assets/demo/example.png" width="50%">
+</p>
+</details>
 
 ## 🕋 三维重建
 

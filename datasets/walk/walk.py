@@ -13,8 +13,8 @@ from os import listdir
 from pathlib import Path
 from functools import reduce
 from datetime import datetime
-from os.path import join, isdir
 from argparse import ArgumentParser
+from os.path import join, isdir, exists
 
 from datasets.dataset import RGBDDataset
 
@@ -49,6 +49,7 @@ class WALKDataset(RGBDDataset):
 
         pseudo_labels = kwargs.get('PSEUDO_LABELS', None)
         npz_paths = [join(npz_root, x) for x in pseudo_labels]
+        npz_paths = [x for x in npz_paths if exists(x)]
         npz_names = [{d[:int(d.split()[-1])]: Path(path, d) for d in listdir(path) if isdir(join(path, d))} for path in npz_paths]
         npz_paths = [name_dict[seq_name] for name_dict in npz_names if seq_name in name_dict.keys()]
 
@@ -72,13 +73,13 @@ class WALKDataset(RGBDDataset):
         self.pproot = join(pproot, ppid, seq_name)
 
         if not self.propagating:
-            assert os.path.exists(self.pproot)
-        elif not os.path.exists(self.pproot):
+            assert exists(self.pproot)
+        elif not exists(self.pproot):
             os.makedirs(self.pproot, exist_ok=True)
 
         image_root = kwargs.get('VIDEO_IMAGE_ROOT', None)
         self.image_root = join(image_root, seq_name)
-        if not os.path.exists(self.image_root):
+        if not exists(self.image_root):
             os.makedirs(self.image_root, exist_ok=True)
 
         self.step = kwargs.get('STEP', None)
@@ -101,11 +102,11 @@ class WALKDataset(RGBDDataset):
             self.path = {skip: [] for skip in self.skips}
             for npz_path in npz_paths:
                 skip = parse_skip(npz_path)
-                assert os.path.exists(npz_path / 'nums.npy')
+                assert exists(npz_path / 'nums.npy')
                 with open(npz_path / 'nums.npy', 'rb') as f:
                     npz = np.load(f)
                     nums[skip].append(npz)
-                assert os.path.exists(npz_path / 'idxs.npy')
+                assert exists(npz_path / 'idxs.npy')
                 with open(npz_path / 'idxs.npy', 'rb') as f:
                     npz = np.load(f)
                     idxs[skip].append(npz)
@@ -141,17 +142,15 @@ class WALKDataset(RGBDDataset):
         pair_ids = set(map(tuple, pair_ids.tolist()))
 
         if self.propagating:
-            assert not os.path.exists(join(self.pproot, 'bad_pairs.txt'))
+            assert not exists(join(self.pproot, 'bad_pairs.txt'))
 
-        if os.path.exists(join(self.pproot, 'bad_pairs.txt')):
+        if exists(join(self.pproot, 'bad_pairs.txt')):
             with open(join(self.pproot, 'bad_pairs.txt'), 'r') as f:
                 unvalid_pairs = set([tuple(map(int, line.split())) for line in f.readlines()])
-                if not self.propagating:
-                    print(f'{seq_name} has {len(unvalid_pairs)} unvalid pairs.')
+                self.unvalid_pairs_num = len(unvalid_pairs) if not self.propagating else 'N/A'
                 pair_ids = pair_ids - unvalid_pairs
 
-        if not self.propagating:
-            print(f'{seq_name} has {len(pair_ids)} valid pairs.')
+        self.valid_pairs_num = len(pair_ids) if not self.propagating else 'N/A'
 
         self.pair_ids = list(map(list, pair_ids))  # List[List[int, int]]
 
@@ -258,7 +257,7 @@ class WALKDataset(RGBDDataset):
         labels = []
         for path in self.path[skip]:
             p = path / '{}.npy'.format(str(np.array(pair)))
-            if os.path.exists(p):
+            if exists(p):
                 with open(p, 'rb') as f:
                     labels.append(np.load(f))
 
@@ -271,14 +270,14 @@ class WALKDataset(RGBDDataset):
 
         pppath = join(self.pproot, '{}_{}.npy'.format(idx0, idx1))
 
-        if self.propagating and os.path.exists(pppath):
+        if self.propagating and exists(pppath):
             return None
 
         # check propagation
         if not self.propagating:
-            assert os.path.exists(pppath), f'{pppath} does not exist'
+            assert exists(pppath), f'{pppath} does not exist'
 
-        if not os.path.exists(pppath):
+        if not exists(pppath):
             pseudo_label, idx0, idx1 = self.propagate(idx0, idx1, self.skips)
 
             if idx1 - idx0 == self.skips[-1]:
@@ -481,7 +480,7 @@ if __name__ == '__main__':
         num = 10
         samples = random.sample(samples, num)
         for idx_ in tqdm(samples[:num], ncols=80, bar_format="{l_bar}{bar:3}{r_bar}", total=num,
-                         desc=f'[ {seq_name[:min(10, len(seq_name)-1)]:<10} ] [ {len(dataset):<5} ]',):
+                         desc=f'[ {seq_name[:min(10, len(seq_name)-1)]:<10} ] [ {dataset.valid_pairs_num:<5} / {dataset.valid_pairs_num+dataset.unvalid_pairs_num:<5} ]',):
             data_ = dataset[idx_]
 
             if data_ is None: continue
@@ -500,9 +499,9 @@ if __name__ == '__main__':
             idx0_, idx1_ = data_['pair_id'].split('-')
             idx0_, idx1_ = map(int, [idx0_, idx1_])
 
-            out = fast_make_matching_robust_fitting_figure(data_)
+            out = fast_make_matching_robust_fitting_figure(data_, transpose=True)
             save_dir = Path('dump/walk') / seq_name
-            if not os.path.exists(save_dir): save_dir.mkdir(parents=True, exist_ok=True)
+            if not exists(save_dir): save_dir.mkdir(parents=True, exist_ok=True)
             cv2.imwrite(join(save_dir, '{:8d} [{}] {:8d} {:3d}.png'.format(
                 idx0_,
                 datetime.utcnow().strftime('%Y-%m-%d %H-%M-%S %f')[:-3],

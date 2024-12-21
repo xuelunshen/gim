@@ -82,7 +82,7 @@ def main():
 
     fps = math.ceil(fps)
     opt.range = [300, end_range] if opt.range is None else opt.range
-    opt.range = [0, -1] if video_name == 'F6v1QxZkm1k' else opt.range  # for demo
+    opt.range = [0, -1] if video_name == 'Od-rKbC30TM' else opt.range  # for demo
 
     if fps <= 30:
         skip = [10, 20, 40][opt.skip]
