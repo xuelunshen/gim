@@ -201,6 +201,31 @@ python demo.py --model gim_lightglue
 </p>
 </details>
 
+<details>
+<summary>
+<b>
+	[ ⚠️ 如果你遇到 torchvision 的 VideoReader 报错, 请点击展开 ]
+</b>
+</summary>
+新建一个 conda 环境并且参考下面的内容安装依赖, 再去运行视频处理代码.
+
+```bash
+conda create -n gim-video python=3.8.10
+conda install pytorch==1.10.1 torchvision==0.11.2 torchaudio==0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge
+pip install albumentations==1.0.1 --no-binary=imgaug,albumentations
+pip install pytorch-lightning==1.5.10
+pip install opencv-python==4.5.3.56
+pip install imagesize==1.2.0
+pip install kornia==0.6.10
+pip install einops==0.3.0
+pip install loguru==0.5.3
+pip install joblib==1.0.1
+pip install yacs==0.1.8
+pip install h5py==3.1.0
+```
+
+</details>
+
 ## 🕋 三维重建
 
 本仓库三维重建的代码是基于 [hloc](https://github.com/cvg/Hierarchical-Localization) 实现.
