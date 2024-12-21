@@ -437,7 +437,7 @@ class WALKDataset(RGBDDataset):
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('seq_name', type=str, nargs='+')
+    parser.add_argument('seq_names', type=str, nargs='+')
     args = parser.parse_args()
 
     train_cfg = cfg.DATASET.TRAIN
@@ -462,7 +462,13 @@ if __name__ == '__main__':
         ]
     }
 
-    for seq_name in args.seq_name:
+    if os.path.isfile(args.seq_names[0]):
+        with open(args.seq_names[0], 'r') as f:
+            seq_names = [line.strip() for line in f.readlines()]
+    else:
+        seq_names = args.seq_names
+
+    for seq_name in seq_names:
         input_ = {
             **base_input,
             **cfg_input,

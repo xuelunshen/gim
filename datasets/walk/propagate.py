@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 # @Author  : xuelun
 
+import os
 from tqdm import tqdm
+from argparse import ArgumentParser
 from torch.utils.data import DataLoader
 
 from datasets.walk import cfg
@@ -15,7 +17,7 @@ def propagate(loader, seq):
         continue
 
 
-def init_dataset(seq_name):
+def init_dataset(seq_name_):
     train_cfg = cfg.DATASET.TRAIN
     
     base_input = {
@@ -23,7 +25,7 @@ def init_dataset(seq_name):
         'mode': 'train',
         'augment_fn': None,
         'PROPAGATING': True,
-        'seq_name': seq_name,
+        'seq_name': seq_name_,
         'max_resize': [1280, 720],
         'padding': cfg.DATASET.TRAIN.PADDING,
         'max_samples': cfg.DATASET.TRAIN.MAX_SAMPLES,
@@ -59,19 +61,22 @@ def collate_fn(batch):
 
 
 if __name__ == '__main__':
-    from argparse import ArgumentParser
-
     parser = ArgumentParser()
-    parser.add_argument('seq_name', type=str, nargs='+')
+    parser.add_argument('seq_names', type=str, nargs='+')
     args = parser.parse_args()
 
-    for seq_name_ in args.seq_name:
-        seq_name_ = seq_name_.strip()
-        
-        dataset_ = init_dataset(seq_name_)
+    if os.path.isfile(args.seq_names[0]):
+        with open(args.seq_names[0], 'r') as f:
+            seq_names = [line.strip() for line in f.readlines()]
+    else:
+        seq_names = args.seq_names
+
+    for seq_name in seq_names:
+
+        dataset_ = init_dataset(seq_name)
 
         loader_params = {'batch_size': 1, 'shuffle': False, 'num_workers': 3,
                          'pin_memory': True, 'drop_last': False}
         loader_ = DataLoader(dataset_, collate_fn=collate_fn, **loader_params)
 
-        propagate(loader_, seq_name_)
+        propagate(loader_, seq_name)

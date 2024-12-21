@@ -184,9 +184,9 @@ There are more images in the `assets/demo` folder, you can try them out.
 
 1. Put the id of the YouTube video you want to process into the `video_list.txt` file. For example, the id of the video `https://www.youtube.com/watch?v=Od-rKbC30TM` is `Od-rKbC30TM`. Now the `video_list.txt` file already contains this example video. You can do nothing now and directly go to the second step.
 2. Use the command `chmod +x process_videos.sh` to give the `process_videos.sh` file execution permission
-3. Use the command `./process_videos.sh` to run the video processing code
-4. Use the command `python -m datasets.walk.propagate Od-rKbC30TM` to run the video processing code
-5. Use the command `python -m datasets.walk.walk Od-rKbC30TM` to run the visualization code
+3. Use the command `./process_videos.sh video_list.txt` to run the video processing code
+4. Use the command `python -m datasets.walk.propagate video_list.txt` to run the video processing code
+5. Use the command `python -m datasets.walk.walk video_list.txt` to run the visualization code
 
 > The processing results and intermediate files are located in the `data/ZeroMatch` folder, and the visualization results are in the `dump/walk` folder. If everything goes well, you should see a result similar to the image below (click to expand the image).
 

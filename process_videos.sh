@@ -1,5 +1,18 @@
 #!/bin/bash
 
+# Check arguments
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <video_list.txt>"
+    echo "Please provide a txt file containing video IDs as argument"
+    exit 1
+fi
+
+# Check if file exists and is a txt file
+if [[ ! -f "$1" || "${1##*.}" != "txt" ]]; then
+    echo "Error: Please provide a valid txt file"
+    exit 1
+fi
+
 mkdir logs
 mkdir -p data/ZeroMatch/pseudo
 mkdir -p data/ZeroMatch/video_1080p
@@ -62,4 +75,4 @@ do
     done
   done
 
-done < "video_list.txt"
+done < "$1"

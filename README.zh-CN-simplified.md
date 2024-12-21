@@ -184,9 +184,9 @@ python demo.py --model gim_lightglue
 
 1. 将你要处理的 YouTube 视频的 id 粘贴到 `video_list.txt` 文件中. 比如视频 `https://www.youtube.com/watch?v=Od-rKbC30TM` 的 id 就是 `Od-rKbC30TM`. 现在 video_list.txt 文件内已经粘贴了这个示例视频. 你现在可以先什么都不用做, 直接进入第二步.
 2. 用命令 `chmod +x process_videos.sh` 赋予 `process_videos.sh` 文件执行权限
-3. 用命令 `./process_videos.sh` 运行视频处理代码
-4. 用命令 `python -m datasets.walk.propagate Od-rKbC30TM` 运行视频处理代码
-5. 用命令 `python -m datasets.walk.walk Od-rKbC30TM` 运行可视化代码
+3. 用命令 `./process_videos.sh video_list.txt` 运行视频处理代码
+4. 用命令 `python -m datasets.walk.propagate video_list.txt` 运行视频处理代码
+5. 用命令 `python -m datasets.walk.walk video_list.txt` 运行可视化代码
 
 > 处理结果和中间文件位于 `data/ZeroMatch` 文件夹内, 可视化结果在 `dump/walk` 文件夹内. 不出意外你可以看到类似下方图片的处理结果(点击展开图像).
 
