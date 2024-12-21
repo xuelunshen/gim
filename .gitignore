@@ -1,19 +1,23 @@
-# Project specific directories
-zeb/
-dump/
-tensorboard/
-
-# Python
-**/__pycache__/
-
-# IDE
-.idea/
-
-# System files
-.DS_Store
-
-# Data files
-zeb.xlsx
-
-# Symbolic link
-zeb
+# Project specific directories 
+zeb/ 
+data/ 
+dump/ 
+weights/ 
+tensorboard/ 
+ 
+# Python 
+**/__pycache__/ 
+ 
+# IDE 
+.idea/ 
+ 
+# System files 
+.DS_Store 
+ 
+# Data files 
+zeb.xlsx 
+video_list.txt 
+ 
+# Symbolic link 
+zeb 
+data 
