@@ -411,8 +411,8 @@ class LightGlue(nn.Module):
         b, n, _ = kpts1.shape
         device = kpts0.device
         # if "view0" in data.keys() and "view1" in data.keys():
-        size0 = data["image_size0"][:, [1, 0]]
-        size1 = data["image_size0"][:, [1, 0]]
+        size0 = data["image_size0"][:, [1, 0]] if "image_size0" in data.keys() else data["resize0"][:, [1, 0]]
+        size1 = data["image_size1"][:, [1, 0]] if "image_size1" in data.keys() else data["resize1"][:, [1, 0]]
         kpts0 = normalize_keypoints(kpts0, size0).clone()
         kpts1 = normalize_keypoints(kpts1, size1).clone()
 

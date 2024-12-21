@@ -35,10 +35,10 @@ class LoFTR(nn.Module):
             loftr_fine: {OrderedDict: 20}             
             fine_preprocess: {OrderedDict: 4}             
         """
-        # if config['weight'] is not None:
-        #     weights = torch.load(config['weight'], map_location='cpu')['state_dict']
-        #     self.load_state_dict(weights)
-        #     print(config['weight'] + ' load success.')
+        if config['weight'] is not None:
+            weights = torch.load(config['weight'], map_location='cpu')
+            self.load_state_dict(weights)
+            # print(config['weight'] + ' load success.')
 
     def forward(self, data):
         """
