@@ -1,8 +1,6 @@
 # Project specific directories
 zeb/
-data/
 dump/
-weights/
 tensorboard/
 
 # Python
@@ -16,8 +14,6 @@ tensorboard/
 
 # Data files
 zeb.xlsx
-video_list.txt
 
 # Symbolic link
 zeb
-data
