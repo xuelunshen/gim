@@ -227,7 +227,7 @@ pip install h5py==3.1.0
 </details>
 
 ## 🏋️ Training Network
-> After processing the video, it's time to train the network. The training code for `gim-loftr` is in the `train-gim-loftr` branch of the repository. The training code for `gim-dkm` and `gim-lightglue` will be released later. However, adapting the video data by `gim` to the architecture of `dkm` and `lightglue` is actually simpler than adapting it to `loftr`. Therefore, we chose to release the most complicated training code for `gim-loftr`.
+> After processing the video, it's time to train the network. The training code for `gim-loftr` is in the `train-gim-loftr` branch of the repository. The training code for `gim-dkm` and `gim-lightglue` will be released later. However, adapting the video data by `gim` to the architecture of `dkm` and `lightglue` is actually simpler than adapting it to `loftr`. Therefore, we first release the training code for `gim-loftr`.
 
 1. Use the command `git checkout train-gim-loftr` to switch to the `train-gim-loftr` branch
 2. Use the command below to run the training code
