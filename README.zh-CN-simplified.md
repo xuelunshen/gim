@@ -43,7 +43,7 @@
   - [x] gim_dkm
   - [x] gim_loftr
   - [x] gim_lightglue
-- [ ] 训练代码
+- [x] 训练代码
 
 > 剩余的开源工作我们还在抓紧进行, 感谢大家的关注.
 
@@ -225,6 +225,27 @@ pip install h5py==3.1.0
 ```
 
 </details>
+
+## 🏋️ 训练网络
+> 处理完视频之后就是训练网络, 训练 `gim-loftr` 的代码在仓库分支 `train-gim-loftr` 中. 训练 `gim-dkm` 的代码和训练 `gim-lightglue` 的代码稍后会开源. 不过相比于 `loftr`, 适配 gim 的视频数据到 `dkm` 和 `lightglue` 的架构其实简单的多, 所以我选择公布最为麻烦的 `gim-loftr` 的训练代码.
+
+1. 用命令 `git checkout train-gim-loftr` 切换到 `train-gim-loftr` 分支
+2. 用下方命令运行训练代码
+
+```bash
+#! /bin/bash
+GPUS=8
+NNODES=5
+GITID=$(git rev-parse --short=8 HEAD)
+MODELID=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 8 | head -n 1)
+python -m torch.distributed.launch --nproc_per_node=gpu --nnodes=$WORLD_SIZE --node_rank $RANK --master_addr $MASTER_ADDR --master_port $MASTER_PORT --use_env train.py --num_nodes $NNODES --gpus $GPUS --max_epochs 10 --maxlen 938240 938240 938240 --lr 0.001 --min_lr 0.00005 --git $GITID --wid $MODELID --resample --img_size 840 --batch_size 1 --valid_batch_size 2
+```
+
+我们是在 5 个 A100 节点上进行 `gim-loftr` 的训练, 每个节点 8 张 80 GB 的显卡. 其中 `WORLD_SIZE`, `RANK`, `MASTER_ADDR`, `MASTER_PORT` 是分布式训练的参数, 应该可以自动从集群运行环境中获取. 如果你用的是单机单卡或者单机多卡训练, 那么用下面的命令运行训练代码即可.
+
+```bash
+python train.py --num_nodes 1 --gpus $GPUS --max_epochs 10 --maxlen 938240 938240 938240 --lr 0.001 --min_lr 0.00005 --git $GITID --wid $MODELID --resample --img_size 840 --batch_size 1 --valid_batch_size 2
+```
 
 ## 🕋 三维重建
 

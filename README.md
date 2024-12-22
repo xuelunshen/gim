@@ -43,7 +43,7 @@
   - [x] gim_dkm
   - [x] gim_loftr
   - [x] gim_lightglue
-- [ ] Training code
+- [x] Training code
 
 > We are actively continuing with the remaining open-source work and appreciate everyone's attention.
 
@@ -225,6 +225,27 @@ pip install h5py==3.1.0
 ```
 
 </details>
+
+## 🏋️ Training Network
+> After processing the video, it's time to train the network. The training code for `gim-loftr` is in the `train-gim-loftr` branch of the repository. The training code for `gim-dkm` and `gim-lightglue` will be released later. However, adapting the video data by `gim` to the architecture of `dkm` and `lightglue` is actually simpler than adapting it to `loftr`. Therefore, we chose to release the most complicated training code for `gim-loftr`.
+
+1. Use the command `git checkout train-gim-loftr` to switch to the `train-gim-loftr` branch
+2. Use the command below to run the training code
+
+```bash
+#! /bin/bash
+GPUS=8
+NNODES=5
+GITID=$(git rev-parse --short=8 HEAD)
+MODELID=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 8 | head -n 1)
+python -m torch.distributed.launch --nproc_per_node=gpu --nnodes=$WORLD_SIZE --node_rank $RANK --master_addr $MASTER_ADDR --master_port $MASTER_PORT --use_env train.py --num_nodes $NNODES --gpus $GPUS --max_epochs 10 --maxlen 938240 938240 938240 --lr 0.001 --min_lr 0.00005 --git $GITID --wid $MODELID --resample --img_size 840 --batch_size 1 --valid_batch_size 2
+```
+
+We train `gim-loftr` on 5 A100 nodes, with each node having 8 GPUs with 80 GB memory. The parameters `WORLD_SIZE`, `RANK`, `MASTER_ADDR`, `MASTER_PORT` are for distributed training and should be automatically obtained from the cluster environment. If you are using single machine with single GPU or multiple GPUs, you can run the training code with the command below.
+
+```bash
+python train.py --num_nodes 1 --gpus $GPUS --max_epochs 10 --maxlen 938240 938240 938240 --lr 0.001 --min_lr 0.00005 --git $GITID --wid $MODELID --resample --img_size 840 --batch_size 1 --valid_batch_size 2
+```
 
 ## 🕋 3D Reconstruction
 
