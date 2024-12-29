@@ -3,6 +3,7 @@ zeb/
 data/
 dump/
 logs/
+weights/
 tensorboard/
 
 # Python

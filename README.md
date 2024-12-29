@@ -182,7 +182,9 @@ There are more images in the `assets/demo` folder, you can try them out.
 ### Get reliable pixel correspondences between video frames without 3D reconstruction
 > Because of some reasons, we cannot provide specific YouTube videos used for training, but I can tell you that using the keywords `walk in` or `walk through` to search on YouTube will find relevant videos. The videos used for processing need to be shot without any processing. There should be no editing, no transitions, no special effects, etc. Below, I will introduce the entire process.
 
-> Preparation: download the [semantic-segmentation](https://github.com/CSAILVision/semantic-segmentation-pytorch)'s model parameters (`decoder_epoch_20.pth`) from [Google Drive](https://drive.google.com/file/d/1YswCj58VuVhqEpMKQ_k0QJb3_mMdpF8M/view?usp=sharing) or [OneDrive](https://stuxmueducn-my.sharepoint.com/:u:/g/personal/xuelun_stu_xmu_edu_cn/EUR_XMay5b5FtWelmqXiLi4Bcnv4G1w5b2aYjhqS-Ds_ow) and put the model parameters in the folder `weights`.
+> Preparation:
+> 1. download the [semantic-segmentation](https://github.com/CSAILVision/semantic-segmentation-pytorch)'s model parameters (`decoder_epoch_20.pth`) from [Google Drive](https://drive.google.com/file/d/1YswCj58VuVhqEpMKQ_k0QJb3_mMdpF8M/view?usp=sharing) or [OneDrive](https://stuxmueducn-my.sharepoint.com/:u:/g/personal/xuelun_stu_xmu_edu_cn/EUR_XMay5b5FtWelmqXiLi4Bcnv4G1w5b2aYjhqS-Ds_ow) and put the model parameters in the folder `weights`.
+> 2. Install `yt-dlp` (on Ubuntu system, use `sudo apt-get install yt-dlp` to install)
 
 1. Put the id of the YouTube video you want to process into the `video_list.txt` file. For example, the id of the video `https://www.youtube.com/watch?v=Od-rKbC30TM` is `Od-rKbC30TM`. Now the `video_list.txt` file already contains this example video. You can do nothing now and directly go to the second step.
 2. Use the command `chmod +x process_videos.sh` to give the `process_videos.sh` file execution permission

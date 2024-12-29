@@ -182,7 +182,9 @@ python demo.py --model gim_lightglue
 ### 不需要三维重建即可得到视频图像帧之间可靠的像素对应关系
 > 因为一些原因, 我们不能提供具体使用了哪些 Youtube 视频进行训练, 我可以告诉大家的是, 用关键词 `walk in` 或者 `walk through` 去 YouTube 搜索相关视频. 用来处理的视频需要是拍摄后没有经过任何处理的. 不要有剪辑, 不要有转场, 不要有特效等等. 下面我介绍一下整个流程.
 
-> 准备工作: 从 [Google Drive](https://drive.google.com/file/d/1YswCj58VuVhqEpMKQ_k0QJb3_mMdpF8M/view?usp=sharing) 或者 [OneDrive](https://stuxmueducn-my.sharepoint.com/:u:/g/personal/xuelun_stu_xmu_edu_cn/EUR_XMay5b5FtWelmqXiLi4Bcnv4G1w5b2aYjhqS-Ds_ow) 下载来自 [semantic-segmentation-pytorch](https://github.com/CSAILVision/semantic-segmentation-pytorch) 的模型参数(`decoder_epoch_20.pth`), 将模型参数放在文件夹 `weights` 里面.
+> 准备工作:
+> 1. 从 [Google Drive](https://drive.google.com/file/d/1YswCj58VuVhqEpMKQ_k0QJb3_mMdpF8M/view?usp=sharing) 或者 [OneDrive](https://stuxmueducn-my.sharepoint.com/:u:/g/personal/xuelun_stu_xmu_edu_cn/EUR_XMay5b5FtWelmqXiLi4Bcnv4G1w5b2aYjhqS-Ds_ow) 下载来自 [semantic-segmentation-pytorch](https://github.com/CSAILVision/semantic-segmentation-pytorch) 的模型参数(`decoder_epoch_20.pth`), 将模型参数放在文件夹 `weights` 里面.
+> 2. 安装 `yt-dlp` (在 Ubuntu 系统上, 使用 `sudo apt-get install yt-dlp` 安装)
 
 1. 将你要处理的 YouTube 视频的 id 粘贴到 `video_list.txt` 文件中. 比如视频 `https://www.youtube.com/watch?v=Od-rKbC30TM` 的 id 就是 `Od-rKbC30TM`. 现在 video_list.txt 文件内已经粘贴了这个示例视频. 你现在可以先什么都不用做, 直接进入第二步.
 2. 用命令 `chmod +x process_videos.sh` 赋予 `process_videos.sh` 文件执行权限
