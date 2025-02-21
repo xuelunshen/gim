@@ -2,14 +2,12 @@
 # @Author  : xuelun
 
 import os
-import cv2
 import math
 import torch
 
 import pytorch_lightning as pl
 
 from pathlib import Path
-from collections import OrderedDict
 from pytorch_lightning.callbacks import ModelCheckpoint, ModelSummary
 
 from modules.loftr import LoFTR
@@ -19,7 +17,6 @@ from tools.comm import all_gather
 from tools.metrics import aggregate_metrics
 from tools.metrics import compute_symmetrical_epipolar_errors, compute_pose_errors
 from tools.misc import lower_config, flattenList
-from tools.plotting import fast_make_matching_robust_fitting_figure
 from trainer.optimizer import build_optimizer
 
 
