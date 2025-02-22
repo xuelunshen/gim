@@ -3,18 +3,14 @@ from torch.optim.lr_scheduler import MultiStepLR, CosineAnnealingLR, Exponential
 from torch.optim.lr_scheduler import _LRScheduler
 
 
-def build_optimizer(model, config, key=None):
+def build_optimizer(model, config):
     name = config.TRAINER.OPTIMIZER
-    lr = 0.0
-
-    parameters = model.named_parameters() if key is None else []
-    if key is not None: parameters.append({'params': [p for k,p in model.named_parameters() if key in k]})
-    if key is not None: parameters.append({'params': [p for k,p in model.named_parameters() if key not in k]})
+    lr = config.TRAINER.TRUE_LR
 
     if name == "adam":
-        return torch.optim.Adam(parameters, lr=lr, weight_decay=config.TRAINER.ADAM_DECAY)
+        return torch.optim.Adam(model.parameters(), lr=lr, weight_decay=config.TRAINER.ADAM_DECAY)
     elif name == "adamw":
-        return torch.optim.AdamW(parameters, lr=lr, weight_decay=config.TRAINER.ADAMW_DECAY)
+        return torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=config.TRAINER.ADAMW_DECAY)
     else:
         raise ValueError(f"TRAINER.OPTIMIZER = {name} is not a valid optimizer!")
 
@@ -87,3 +83,34 @@ def build_scheduler(config, optimizer):
         raise NotImplementedError()
 
     return scheduler
+
+
+def get_lr_scheduler(optimizer, conf = None):
+    """Get lr scheduler specified by conf.train.lr_schedule."""
+
+    if conf is None:
+        conf = {
+            'type': 'exp',
+            'start': 30,
+            'exp_div_10': 10,
+            'on_epoch': True,
+            'factor': 1.0,
+            'options': {}
+        }
+
+    if conf['type'] not in ["factor", "exp", None]:
+        return getattr(torch.optim.lr_scheduler, conf['type'])(optimizer, **conf['options'])
+
+    # backward compatibility
+    def lr_fn(it):  # noqa: E306
+        if conf['type'] is None:
+            return 1
+        if conf['type'] == "factor":
+            return 1.0 if it < conf['start'] else conf['factor']
+        if conf['type'] == "exp":
+            gam = 10 ** (-1 / conf['exp_div_10'])
+            return 1.0 if it < conf['start'] else gam
+        else:
+            raise ValueError(conf['type'])
+
+    return torch.optim.lr_scheduler.MultiplicativeLR(optimizer, lr_fn)

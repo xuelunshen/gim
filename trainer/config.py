@@ -22,11 +22,11 @@ _CN.TRAINER.GRADIENT_CLIP_VAL = 0.5 # default 0.0
 _CN.TRAINER.GRADIENT_CLIP_ALGORITHM = 'norm' # default 'norm'
 
 # optimizer
-_CN.TRAINER.CANONICAL_BS = 64
-_CN.TRAINER.OPTIMIZER = "adamw"  # [adam, adamw]
+_CN.TRAINER.CANONICAL_BS = 120
+_CN.TRAINER.OPTIMIZER = "adam"  # [adam, adamw]
 _CN.TRAINER.TRUE_LR = None  # this will be calculated automatically at runtime
 _CN.TRAINER.ADAM_DECAY = 0.  # ADAM: for adam
-_CN.TRAINER.ADAMW_DECAY = 0.1
+_CN.TRAINER.ADAMW_DECAY = 0.01
 # step-based warm-up
 _CN.TRAINER.WARMUP_TYPE = 'linear'  # [linear, constant]
 _CN.TRAINER.WARMUP_RATIO = 0.1

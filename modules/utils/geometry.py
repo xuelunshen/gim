@@ -53,8 +53,28 @@ def Project_3d_to_2d(pts, K, H, W):
     return UV
 
 
+def sample_fmap(pts, fmap):
+    h, w = fmap.shape[-2:]
+    grid_sample = torch.nn.functional.grid_sample
+    pts = (pts / pts.new_tensor([[w, h]]) * 2 - 1)[:, None]
+    # @TODO: This might still be a source of noise --> bilinear interpolation dangerous
+    interp_lin = grid_sample(fmap, pts, align_corners=False, mode="bilinear")
+    interp_nn = grid_sample(fmap, pts, align_corners=False, mode="nearest")
+    return torch.where(torch.isnan(interp_lin), interp_nn, interp_lin)[:, :, 0].permute(
+        0, 2, 1
+    )
+
+
+def sample_depth(pts, depth_):
+    depth = torch.where(depth_ > 0, depth_, depth_.new_tensor(float("nan")))
+    depth = depth[:, None]
+    interp = sample_fmap(pts, depth).squeeze(-1)
+    valid = (~torch.isnan(interp)) & (interp > 0)
+    return interp, valid
+
+
 @torch.no_grad()
-def warp_kpts(kpts0, depth0, depth1, T_0to1, K0, K1, K0_, K1_, size):
+def warp_kpts(kpts0, depth0, depth1, T_0to1, K0, K1, size0, size1):
     """ Warp kpts0 from I0 to I1 with depth, K and Rt
     Also check covisibility and depth consistency.
     Depth is consistent if relative error < 0.2 (hard-coded).
@@ -65,9 +85,8 @@ def warp_kpts(kpts0, depth0, depth1, T_0to1, K0, K1, K0_, K1_, size):
         T_0to1 (torch.Tensor): [b, 4, 4],
         K0 (torch.Tensor): [b, 3, 3],
         K1 (torch.Tensor): [b, 3, 3],
-        K0_ (torch.Tensor): [b, 12], (fx, fy, cx, cy, k1, k2, p1, p2, k3, k4, sx1, sy1)
-        K1_ (torch.Tensor): [b, 12], (fx, fy, cx, cy, k1, k2, p1, p2, k3, k4, sx1, sy1)
-        size
+        size0 (torch.Tensor): [b, 2], (h, w)
+        size1 (torch.Tensor): [b, 2], (h, w)
     Returns:
         pos_mask (torch.Tensor): [b, N]
         neg_mask (torch.Tensor): [b, N]
@@ -77,41 +96,25 @@ def warp_kpts(kpts0, depth0, depth1, T_0to1, K0, K1, K0_, K1_, size):
     kpts0_h = torch.cat([kpts0, torch.ones_like(kpts0[:, :, [0]])], dim=-1)  # (N, L, 3)
     kpts0_cam = K0.inverse() @ kpts0_h.transpose(2, 1)  # (N, 3, L) w/ last coordinate is 1
 
-    kpts0_long = torch.cat([
-        kpts0[[i]] if k.sum() == 0 else
-        Project_3d_to_2d(kpts0_cam[i][None], k[None], depth0.size(1), depth0.size(2))
-        for i, k in enumerate(K0_)
-    ], dim=0).round().long()  # (N, L, 2)
+    kpts0_samples = [sample_depth(pt[None], dp[:h.item(), :w.item()][None]) for pt, dp, (h, w) in zip(kpts0, depth0, size0)]
+    kpts0_depth = torch.concat([x[0] for x in kpts0_samples])
+    kpts0_valid0 = torch.concat([x[1] for x in kpts0_samples])
 
-    bad_mask = torch.logical_or(
-        torch.logical_or(kpts0_long[..., 0] < 0, kpts0_long[..., 0] >= depth0.size(2)),
-        torch.logical_or(kpts0_long[..., 1] < 0, kpts0_long[..., 1] >= depth0.size(1))
-    )
-    kpts0_long[bad_mask] = 0
-
-    # Sample depth, get calculable_mask on depth != 0
-    kpts0_depth = torch.stack(
-        [depth0[i, kpts0_long[i, :, 1], kpts0_long[i, :, 0]] for i in range(kpts0.shape[0])], dim=0
-    )  # (N, L)
-
-    nonzero_mask = kpts0_depth != 0
-    nonzero_mask = nonzero_mask & ~bad_mask
+    nonzero_mask = kpts0_depth > 0
+    nonzero_mask = valid = nonzero_mask & (kpts0_depth == kpts0_depth)
+    # nonzero_mask = nonzero_mask & ~bad_mask
 
     kpts0_cam *= kpts0_depth[:, None]  # (N, 3, L)
 
     # Rigid Transform
     w_kpts0_cam = T_0to1[:, :3, :3] @ kpts0_cam + T_0to1[:, :3, [3]]  # (N, 3, L)
     w_kpts0_depth_computed = w_kpts0_cam[:, 2, :]
+    visible = w_kpts0_depth_computed > 0.0001
 
     # Project
     w_kpts0_h = (K1 @ w_kpts0_cam).transpose(2, 1)  # (N, L, 3)
 
-    w_kpts0 = torch.cat([
-        w_kpts0_h[[i],:,:2] / (w_kpts0_h[[i],:,2][...,None] + 1e-4) if k.sum() == 0 else
-        Project_3d_to_2d(w_kpts0_cam[[i],:2]/(w_kpts0_cam[[i],2][:,None]+1e-4), k[None],
-                         depth1.size(1), depth1.size(2))
-        for i, k in enumerate(K1_)
-    ], dim=0)  # (N, L, 2)
+    w_kpts0 = w_kpts0_h[:, :, :2] / w_kpts0_h[:, :, [2]]  # (N, L, 2)
 
     bad_mask = w_kpts0 != w_kpts0
     w_kpts0[bad_mask] = 0  # invalid
@@ -120,17 +123,7 @@ def warp_kpts(kpts0, depth0, depth1, T_0to1, K0, K1, K0_, K1_, size):
     # Covisible Check
     covisible_mask = torch.stack([(pt[:, 0] > 0) * (pt[:, 0] < (hw[1]-1)) *
                                   (pt[:, 1] > 0) * (pt[:, 1] < (hw[0]-1))
-                                  for pt,hw in zip(w_kpts0, size)])
-    w_kpts0_long = w_kpts0.round().long()
-    w_kpts0_long[~covisible_mask, :] = 0
+                                  for pt,hw in zip(w_kpts0, size1)])
+    pos_mask = nonzero_mask * covisible_mask * visible
 
-    w_kpts0_depth = torch.stack(
-        [depth1[i, w_kpts0_long[i, :, 1], w_kpts0_long[i, :, 0]] for i in range(w_kpts0_long.shape[0])], dim=0
-    )  # (N, L)
-    consistent_mask = ((w_kpts0_depth - w_kpts0_depth_computed) / w_kpts0_depth).abs() < 0.2
-    pos_mask = nonzero_mask * covisible_mask * consistent_mask
-    neg_mask = nonzero_mask * ~covisible_mask
-
-    w_kpts0 = w_kpts0_h[:, :, :2] / (w_kpts0_h[:, :, [2]] + 1e-4)  # (N, L, 2), +1e-4 to avoid zero depth
-
-    return pos_mask, neg_mask, w_kpts0
+    return w_kpts0, pos_mask, valid

@@ -117,7 +117,7 @@ class MultiSceneDataModule(pl.LightningDataModule):
                     padding=dcfg.DATASET.VALID.PADDING,
                     min_overlap_score=dcfg.DATASET.VALID.MIN_OVERLAP_SCORE,
                     max_overlap_score=dcfg.DATASET.VALID.MAX_OVERLAP_SCORE,
-                    max_resize=[840, 840],
+                    max_resize=[1280, 1280],
                     augment_fn=build_augmentor(dcfg.DATASET.VALID.AUGMENTATION_TYPE),
                     max_samples=dcfg.DATASET.VALID.MAX_SAMPLES,
                     mode='valid',

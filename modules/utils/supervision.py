@@ -4,6 +4,9 @@ from kornia.utils import create_meshgrid
 
 from .geometry import warp_kpts
 
+IGNORE_FEATURE = -2
+UNMATCHED_FEATURE = -1
+
 
 def Flip(pts, hf, vf, w, h):
     """
@@ -199,3 +202,174 @@ def spvs_fine(data, scale, radius):
     expec_f_gt = (w_pt0_i[b_ids, i_ids] - pt1_i[b_ids, j_ids]) / scale / radius  # [M, 2]
     # expec_f_gt = torch.cat([expec_f_gt, data['zs_expec_f_gt']], dim=0) if training else expec_f_gt
     data.update({"expec_f_gt": expec_f_gt})
+
+
+@torch.no_grad()
+def spvs(data):
+    pass
+    pos_th = 3
+    neg_th = 5
+    epi_th = 5
+    cc_th = None
+
+    device = data['image0'].device
+    gt = data['gt']
+
+    keypoints0, keypoints1 = data["keypoints0"][gt], data["keypoints1"][gt]
+    scale0, scale1 = data['scale0'][:, None][gt], data['scale1'][:, None][gt]
+    offset0, offset1 = data['offset0'][:, None][gt], data['offset1'][:, None][gt]
+
+    # d0, valid0 = sample_depth(kp0, depth0)
+    # d1, valid1 = sample_depth(kp1, depth1)
+    grid_pt0_rs = Flip(keypoints0, data['hflip0'][gt], data['vflip0'][gt], data['resize0'][:, 1][gt] - 1, data['resize0'][:, 0][gt] - 1)  # rectified flip
+    grid_pt0_rs += offset0
+    kpts0 = grid_pt0_rs * scale0
+
+    Hq_aug = data['Hq_aug'][gt]  # (bs, 3, 3)
+    Hq_aug_inv = torch.inverse(Hq_aug)
+    grid_pt1_fsr = torch.cat([keypoints1, torch.ones_like(keypoints1[:, :, :1])], dim=-1)
+    grid_pt1_fs = torch.einsum('bij,bjk->bik', grid_pt1_fsr, Hq_aug_inv.transpose(1, 2))
+    grid_pt1_fs = grid_pt1_fs[..., :2] / grid_pt1_fs[..., [2]]
+    grid_pt1_rs = Flip(grid_pt1_fs, data['hflip1'][gt], data['vflip1'][gt], data['resize1'][:, 1][gt] - 1, data['resize1'][:, 0][gt] - 1)  # rectified flip
+    grid_pt1_rs += offset1
+    kpts1 = grid_pt1_rs * scale1
+
+    num0, num1 = kpts0.size(1), kpts1.size(1)
+
+    kpts0_transformed, visible0, valid0 = warp_kpts(kpts0, data['depth0'][gt],
+                                                    data['depth1'][gt], data['T_0to1'][gt],
+                                                    data['K0'][gt], data['K1'][gt],
+                                                    data['imsize0'][gt], data['imsize1'][gt])
+    kpts1_transformed, visible1, valid1 = warp_kpts(kpts1, data['depth1'][gt],
+                                                    data['depth0'][gt], data['T_1to0'][gt],
+                                                    data['K1'][gt], data['K0'][gt],
+                                                    data['imsize1'][gt], data['imsize0'][gt])
+    mask_visible = visible0.unsqueeze(-1) & visible1.unsqueeze(-2)
+
+    w_pt0_s, w_pt1_s = kpts0_transformed / scale1, kpts1_transformed / scale0
+    w_pt0_s, w_pt1_s = w_pt0_s - offset1, w_pt1_s - offset0
+    w_pt0_s = Flip(w_pt0_s, data['hflip1'][gt], data['vflip1'][gt], data['resize1'][:, 1][gt] - 1, data['resize1'][:, 0][gt] - 1)
+    w_pt1_s = Flip(w_pt1_s, data['hflip0'][gt], data['vflip0'][gt], data['resize0'][:, 1][gt] - 1, data['resize0'][:, 0][gt] - 1)
+
+    # w_pt0_s is (bs, h0*w0, 2), change it to homography coordinates (bs, h0*w0, 3)
+    w_pt0_s = torch.cat([w_pt0_s, torch.ones_like(w_pt0_s[:, :, :1])], dim=-1)
+    # Hq_aug is (bs, 3, 3), apply it to w_pt0_s
+    w_pt0_s = torch.einsum('bij,bjk->bik', w_pt0_s, Hq_aug.transpose(1, 2))
+    w_pt0_s = w_pt0_s[..., :2] / w_pt0_s[..., [2]]
+
+    # build a distance matrix of size [... x M x N]
+    dist0 = torch.sum((w_pt0_s.unsqueeze(-2) - keypoints1.unsqueeze(-3)) ** 2, -1)
+    dist1 = torch.sum((keypoints0.unsqueeze(-2) - w_pt1_s.unsqueeze(-3)) ** 2, -1)
+    dist = torch.max(dist0, dist1)
+    inf = dist.new_tensor(float("inf"))
+    dist = torch.where(mask_visible, dist, inf)
+
+    min0 = dist.min(-1).indices
+    min1 = dist.min(-2).indices
+
+    ismin0 = torch.zeros(dist.shape, dtype=torch.bool, device=dist.device)
+    ismin1 = ismin0.clone()
+    ismin0.scatter_(-1, min0.unsqueeze(-1), value=1)
+    ismin1.scatter_(-2, min1.unsqueeze(-2), value=1)
+    positive = ismin0 & ismin1 & (dist < pos_th**2)
+
+    negative0 = (dist0.min(-1).values > neg_th**2) & valid0
+    negative1 = (dist1.min(-2).values > neg_th**2) & valid1
+
+    # pack the indices of positive matches
+    # if -1: unmatched point
+    # if -2: ignore point
+    unmatched = min0.new_tensor(UNMATCHED_FEATURE)
+    ignore = min0.new_tensor(IGNORE_FEATURE)
+    m0 = torch.where(positive.any(-1), min0, ignore)
+    m1 = torch.where(positive.any(-2), min1, ignore)
+    m0 = torch.where(negative0, unmatched, m0)
+    m1 = torch.where(negative1, unmatched, m1)
+
+    def skew_symmetric(v):
+        """Create a skew-symmetric matrix from a (batched) vector of size (..., 3)."""
+        z = torch.zeros_like(v[..., 0])
+        M = torch.stack(
+            [
+                z,
+                -v[..., 2],
+                v[..., 1],
+                v[..., 2],
+                z,
+                -v[..., 0],
+                -v[..., 1],
+                v[..., 0],
+                z,
+            ],
+            dim=-1,
+        ).reshape(v.shape[:-1] + (3, 3))
+        return M
+
+    def T_to_E(T):
+        """Convert batched poses (..., 4, 4) to batched essential matrices."""
+        return skew_symmetric(T[:, :3, 3]) @ T[:, :3, :3]
+
+    import numpy as np
+
+    def to_homogeneous(points):
+        """Convert N-dimensional points to homogeneous coordinates.
+        Args:
+            points: torch.Tensor or numpy.ndarray with size (..., N).
+        Returns:
+            A torch.Tensor or numpy.ndarray with size (..., N+1).
+        """
+        if isinstance(points, torch.Tensor):
+            pad = points.new_ones(points.shape[:-1] + (1,))
+            return torch.cat([points, pad], dim=-1)
+        elif isinstance(points, np.ndarray):
+            pad = np.ones((points.shape[:-1] + (1,)), dtype=points.dtype)
+            return np.concatenate([points, pad], axis=-1)
+        else:
+            raise ValueError
+
+    def sym_epipolar_distance_all(p0, p1, E, eps=1e-15):
+        if p0.shape[-1] != 3:
+            p0 = to_homogeneous(p0)
+        if p1.shape[-1] != 3:
+            p1 = to_homogeneous(p1)
+        p1_E_p0 = torch.einsum("...mi,...ij,...nj->...nm", p1, E, p0).abs()
+        E_p0 = torch.einsum("...ij,...nj->...ni", E, p0)
+        Et_p1 = torch.einsum("...ij,...mi->...mj", E, p1)
+        d0 = p1_E_p0 / (E_p0[..., None, 0] ** 2 + E_p0[..., None, 1] ** 2 + eps).sqrt()
+        d1 = (
+                p1_E_p0
+                / (Et_p1[..., None, :, 0] ** 2 + Et_p1[..., None, :,
+                                                 1] ** 2 + eps).sqrt()
+        )
+        return (d0 + d1) / 2
+
+    F = (
+        data['K1'][gt].inverse().transpose(-1, -2)
+        @ T_to_E(data['T_0to1'][gt])
+        @ data['K0'][gt].inverse()
+    )
+    epi_dist = sym_epipolar_distance_all(kpts0, kpts1, F)
+
+    # Add some more unmatched points using epipolar geometry
+    if epi_th is not None:
+        mask_ignore = (m0.unsqueeze(-1) == ignore) & (m1.unsqueeze(-2) == ignore)
+        epi_dist = torch.where(mask_ignore, epi_dist, inf)
+        exclude0 = epi_dist.min(-1).values > neg_th
+        exclude1 = epi_dist.min(-2).values > neg_th
+        m0 = torch.where((~valid0) & exclude0, ignore.new_tensor(-1), m0)
+        m1 = torch.where((~valid1) & exclude1, ignore.new_tensor(-1), m1)
+
+    return {
+        "assignment": positive,
+        "reward": (dist < pos_th**2).float() - (epi_dist > neg_th).float(),
+        "matches0": m0,
+        "matches1": m1,
+        "matching_scores0": (m0 > -1).float(),
+        "matching_scores1": (m1 > -1).float(),
+        # "depth_keypoints0": d0,
+        # "depth_keypoints1": d1,
+        # "proj_0to1": kp0_1,
+        # "proj_1to0": kp1_0,
+        "visible0": visible0,
+        "visible1": visible1,
+    }

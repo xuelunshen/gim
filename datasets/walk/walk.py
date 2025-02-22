@@ -20,13 +20,32 @@ from datasets.dataset import RGBDDataset
 from datasets.utils import read_images
 from datasets.walk.utils import covision, intersected
 
-from modules.utils.coarse_matching import pt_to_grid
-
 parse_mtd = lambda name: name.parent.stem.split()[1]
 parse_skip = lambda name: int(str(name).split(os.sep)[-1].rpartition('SP')[-1].strip().rpartition(' ')[0])
 parse_resize = lambda name: str(name).split(os.sep)[-2].rpartition('[R]')[-1].rpartition('[S]')[0].strip()
 
 create_table = lambda x, y, w: dict(zip(np.round(x) + np.round(y) * w, list(range(len(x)))))
+
+
+def pt_to_grid(pt, hw):
+    """
+    Args:
+        pt: (b, n, 2) - (x, y)
+        hw: (2) - (h, w) - the kpts working size coordinates
+
+    Returns: grid pt: (b, 1, n, 2) - (x, y) in [-1, 1]
+    """
+    # make pts to [0, 2]
+    pt[:, :, 0] *= 2 / (hw[1] - 1)
+    pt[:, :, 1] *= 2 / (hw[0] - 1)
+    # make pts from [0, 2] to [-1, 1]
+    pt -= 1
+    # make sure all pts in [-1, 1]
+    assert (pt >= -1).all() and (pt <= 1).all()
+    # make pts shape from (b, n, 2) to (b, 1, n, 2)
+    pt = pt[:, None]
+
+    return pt
 
 
 def degree_to_matrix(deg, hw):
@@ -476,7 +495,10 @@ class WALKDataset(RGBDDataset):
                 augment_flag = False
 
         fix_pseudo_label = torch.zeros(self.fix_matches, 4, dtype=pseudo_label.dtype)
-        fix_pseudo_label[:len(pseudo_label)] = pseudo_label
+        if len(pseudo_label) > 2048:
+            fix_pseudo_label[:2048] = pseudo_label[:2048]
+        else:
+            fix_pseudo_label[:len(pseudo_label)] = pseudo_label
 
         # read image size
         imsize0 = torch.tensor([height0, width0], dtype=torch.long)

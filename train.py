@@ -79,7 +79,7 @@ if __name__ == '__main__':
     # Hyper-parameters
     parser.add_argument('--img_size', type=int, nargs='+', default=[640, 640],
                         help='Image Size: [width, height]')
-    parser.add_argument('--lr', type=float, default=4e-3,
+    parser.add_argument('--lr', type=float, default=0.0001,
                         help='Learning rate')
     parser.add_argument('--min_lr', type=float, default=1e-8,
                         help='Minimal Learning rate')
@@ -122,9 +122,9 @@ if __name__ == '__main__':
     # ------------
     TRAINER = tcfg.TRAINER
     TRAINER.TRUE_BATCH_SIZE = args.gpus * args.batch_size * args.num_nodes
-    pcfg.accumulate_grad_batches = math.ceil(TRAINER.CANONICAL_BS / TRAINER.TRUE_BATCH_SIZE)
+    # pcfg.accumulate_grad_batches = math.ceil(TRAINER.CANONICAL_BS / TRAINER.TRUE_BATCH_SIZE)
     TRAINER.TRUE_LR = TRAINER.CANONICAL_LR = args.lr
-    TRAINER.NUM_SANITY_VAL_STEPS = 0 if args.weight is None or args.debug else -1
+    TRAINER.NUM_SANITY_VAL_STEPS = 0 if args.debug else -1
 
     # ------------
     # W&B logger
@@ -151,7 +151,7 @@ if __name__ == '__main__':
     # ------------
     # training
     # ------------
-    valid_nums = 1
+    valid_nums = 5  # validation_nums_each_epoch
     checkpoint_path = f'tensorboard/{args.git}/{args.wid}/checkpoints/last.ckpt'
     if os.path.isfile(checkpoint_path):
         resume_checkpoint = checkpoint_path
@@ -177,7 +177,7 @@ if __name__ == '__main__':
         limit_train_batches=TRAINER.LIMIT_TRAIN_BATCHES,
         limit_val_batches=TRAINER.LIMIT_VALID_BATCHES,
         # faster training
-        accumulate_grad_batches=pcfg.accumulate_grad_batches,
+        # accumulate_grad_batches=pcfg.accumulate_grad_batches,
         # amp_level=TRAINER.AMP_LEVEL,
         # amp_backend=TRAINER.AMP_BACKEND,
         # precision=TRAINER.PRECISION,  #https://github.com/PyTorchLightning/pytorch-lightning/issues/5558
