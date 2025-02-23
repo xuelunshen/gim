@@ -44,6 +44,10 @@
   - [x] gim_loftr
   - [x] gim_lightglue
 - [x] 训练代码
+  - [x] gim_roma
+  - [x] gim_dkm
+  - [x] gim_loftr
+  - [x] gim_lightglue
 
 > 剩余的开源工作我们还在抓紧进行, 感谢大家的关注.
 
@@ -231,7 +235,7 @@ pip install h5py==3.1.0
 </details>
 
 ## 🏋️ 训练网络
-> 处理完视频之后就是训练网络, 训练 `gim-loftr` 的代码在仓库分支 `train-gim-loftr` 中. 训练 `gim-dkm` 的代码和训练 `gim-lightglue` 的代码稍后会开源. 不过相比于 `loftr`, 适配 gim 的视频数据到 `dkm` 和 `lightglue` 的架构其实简单的多, 所以我们先公布 `gim-loftr` 的训练代码.
+> 处理完视频之后就是训练网络, 训练代码在仓库分支 `train-gim-roma`, `train-gim-dkm`, `train-gim-loftr` 和 `train-gim-glue` 中.
 
 1. 用命令 `git checkout train-gim-loftr` 切换到 `train-gim-loftr` 分支
 2. 用下方命令运行训练代码
@@ -249,6 +253,19 @@ python -m torch.distributed.launch --nproc_per_node=gpu --nnodes=$WORLD_SIZE --n
 
 ```bash
 python train.py --num_nodes 1 --gpus $GPUS --max_epochs 10 --maxlen 938240 938240 938240 --lr 0.001 --min_lr 0.00005 --git $GITID --wid $MODELID --resample --img_size 840 --batch_size 1 --valid_batch_size 2
+```
+
+其他模型的训练命令如下:
+
+```bash
+# gim-roma
+python train.py --num_nodes 1 --gpus $GPUS --max_epochs 370 --maxlen 25600 25600 25600 --lr 0.0008 --min_lr 0.0001 --git $GITID --wid $MODELID --resample --img_size 672 --batch_size 1 --valid_batch_size 2
+
+# gim-dkm
+python train.py --num_nodes 1 --gpus $GPUS --max_epochs 10 --maxlen 938240 938240 938240 --lr 0.0008 --min_lr 0.0001 --git $GITID --wid $MODELID --resample --img_size 896 672 --batch_size 1 --valid_batch_size 2
+
+# gim-lightglue
+python train.py --num_nodes 1 --gpus $GPUS --max_epochs 50 --maxlen 938240 938240 938240 --lr 0.0001 --git $GITID --wid $MODELID --resample --img_size 1024 --batch_size 1 --valid_batch_size 2
 ```
 
 ## 🕋 三维重建

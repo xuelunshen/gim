@@ -44,6 +44,10 @@
   - [x] gim_loftr
   - [x] gim_lightglue
 - [x] Training code
+  - [x] gim_roma
+  - [x] gim_dkm
+  - [x] gim_loftr
+  - [x] gim_lightglue
 
 > We are actively continuing with the remaining open-source work and appreciate everyone's attention.
 
@@ -231,7 +235,7 @@ pip install h5py==3.1.0
 </details>
 
 ## 🏋️ Training Network
-> After processing the video, it's time to train the network. The training code for `gim-loftr` is in the `train-gim-loftr` branch of the repository. The training code for `gim-dkm` and `gim-lightglue` will be released later. However, adapting the video data by `gim` to the architecture of `dkm` and `lightglue` is actually simpler than adapting it to `loftr`. Therefore, we first release the training code for `gim-loftr`.
+> After processing the video, it's time to train the network. The training code is in the `train-gim-roma`, `train-gim-dkm`, `train-gim-loftr` and `train-gim-glue` branch of the repository.
 
 1. Use the command `git checkout train-gim-loftr` to switch to the `train-gim-loftr` branch
 2. Use the command below to run the training code
@@ -249,6 +253,19 @@ We train `gim-loftr` on 5 A100 nodes, with each node having 8 GPUs with 80 GB me
 
 ```bash
 python train.py --num_nodes 1 --gpus $GPUS --max_epochs 10 --maxlen 938240 938240 938240 --lr 0.001 --min_lr 0.00005 --git $GITID --wid $MODELID --resample --img_size 840 --batch_size 1 --valid_batch_size 2
+```
+
+The training commands for other models are as follows:
+
+```bash
+# gim-roma
+python train.py --num_nodes 1 --gpus $GPUS --max_epochs 370 --maxlen 25600 25600 25600 --lr 0.0008 --min_lr 0.0001 --git $GITID --wid $MODELID --resample --img_size 672 --batch_size 1 --valid_batch_size 2
+
+# gim-dkm
+python train.py --num_nodes 1 --gpus $GPUS --max_epochs 10 --maxlen 938240 938240 938240 --lr 0.0008 --min_lr 0.0001 --git $GITID --wid $MODELID --resample --img_size 896 672 --batch_size 1 --valid_batch_size 2
+
+# gim-lightglue
+python train.py --num_nodes 1 --gpus $GPUS --max_epochs 50 --maxlen 938240 938240 938240 --lr 0.0001 --git $GITID --wid $MODELID --resample --img_size 1024 --batch_size 1 --valid_batch_size 2
 ```
 
 ## 🕋 3D Reconstruction
