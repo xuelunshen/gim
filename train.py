@@ -151,7 +151,7 @@ if __name__ == '__main__':
     # ------------
     # training
     # ------------
-    valid_nums = 1
+    valid_nums = 5  # validation_nums_each_epoch
     checkpoint_path = f'tensorboard/{args.git}/{args.wid}/checkpoints/last.ckpt'
     if os.path.isfile(checkpoint_path):
         resume_checkpoint = checkpoint_path

@@ -2,237 +2,239 @@ from loguru import logger
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+
+from functools import partial
+from einops.einops import rearrange
+
+from datasets.walk.walk import pt_to_grid
+from modules.utils.supervision import Flip
+from modules.utils.geometry import warp_kpts
 
 
-class Loss(nn.Module):
-    def __init__(self, config):
+class DepthRegressionLoss(nn.Module):
+    def __init__(
+        self,
+        robust=True,
+        center_coords=False,
+        scale_normalize=False,
+        ce_weight=0.01,
+        local_loss=True,
+        local_dist=4.0,
+        local_largest_scale=8,
+    ):
         super().__init__()
-        self.config = config  # config under the global namespace
-        self.loss_config = config['loftr']['loss']
-        self.match_type = self.config['loftr']['match_coarse']['match_type']
-        self.sparse_spvs = self.config['loftr']['match_coarse']['sparse_spvs']
+        self.robust = robust  # measured in pixels
+        self.center_coords = center_coords
+        self.scale_normalize = scale_normalize
+        self.ce_weight = ce_weight
+        self.local_loss = local_loss
+        self.local_dist = local_dist
+        self.local_largest_scale = local_largest_scale
 
-        # coarse-level
-        self.correct_thr = self.loss_config['fine_correct_thr']
-        self.c_pos_w = self.loss_config['pos_weight']
-        self.c_neg_w = self.loss_config['neg_weight']
-        # fine-level
-        self.fine_type = self.loss_config['fine_type']
+    def geometric_dist(self, data, dense_matches):
+        with torch.no_grad():
+            gt = data['gt']
+            device = dense_matches.device
+            N, h0, w0, d = dense_matches.shape
+            H0, W0 = data['image0'].shape[-2:]
+            scale0 = data['scale0'][:, None][gt]
+            scale1 = data['scale1'][:, None][gt]
 
-    def compute_coarse_loss(self, conf, conf_gt, weight=None):
-        """ Point-wise CE / Focal Loss with 0 / 1 confidence as gt.
-        Args:
-            conf (torch.Tensor): (N, HW0, HW1) / (N, HW0+1, HW1+1)
-            conf_gt (torch.Tensor): (N, HW0, HW1)
-            weight (torch.Tensor): (N, HW0, HW1)
+            Hq_aug = data['Hq_aug'][gt]  # (bs, 3, 3)
+            offset0, offset1 = data['offset0'][:, None][gt], data['offset1'][:, None][gt]  # (bs, 1, 2) - <x, y>
+
+            grid_pt0 = torch.meshgrid(*[(torch.linspace(-1 + 1 / n, 1 - 1 / n, n, device=device) + 1) / 2 * m for n, m in zip([h0, w0], [H0, W0])])
+            grid_pt0_fs = torch.stack((grid_pt0[1], grid_pt0[0]), dim=-1)[None].expand(N, h0, w0, 2).reshape(N, h0 * w0, 2)
+            grid_pt0_rs = Flip(grid_pt0_fs, data['hflip0'][gt], data['vflip0'][gt], data['resize0'][:, 1][gt] - 1, data['resize0'][:, 0][gt] - 1)  # rectified flip
+            grid_pt0_rs += offset0
+            grid_pt0_i = grid_pt0_rs * scale0
+
+            pos_mask0, neg_mask0, w_pt0_i = warp_kpts(grid_pt0_i, data['depth0'][gt], data['depth1'][gt], data['T_0to1'][gt], data['K0'][gt], data['K1'][gt], data['K0_'][gt], data['K1_'][gt], data['imsize1'][gt])
+
+            w_pt0_s = w_pt0_i / scale1
+            w_pt0_s = w_pt0_s - offset1
+            w_pt0_s = Flip(w_pt0_s, data['hflip1'][gt], data['vflip1'][gt], data['resize1'][:, 1][gt] - 1, data['resize1'][:, 0][gt] - 1)
+            w_pt0_s = torch.cat([w_pt0_s, torch.ones_like(w_pt0_s[:, :, :1])], dim=-1)
+            w_pt0_s = torch.einsum('bij,bjk->bik', w_pt0_s, Hq_aug.transpose(1, 2))
+            w_pt0_s = w_pt0_s[..., :2] / (w_pt0_s[..., [2]] + 1e-8)
+            w_pt0_s[..., 0] = (w_pt0_s[..., 0] / (W0 - 1)) * 2 - 1
+            w_pt0_s[..., 1] = (w_pt0_s[..., 1] / (H0 - 1)) * 2 - 1
+
+            prob = pos_mask0.float().reshape(N, h0, w0)
+
+        gd = (dense_matches - w_pt0_s.reshape(N, h0, w0, 2)).norm(dim=-1)  # *scale?
+
+        return gd, prob
+
+    def zeroshot_dist(self, data, dense_matches, b_ids, grid0, grid1, znum):
         """
-        pos_mask, neg_mask = conf_gt == 1, conf_gt == 0
-        c_pos_w, c_neg_w = self.c_pos_w, self.c_neg_w
-        # corner case: no gt coarse-level match at all
-        if not pos_mask.any():  # assign a wrong gt
-            pos_mask[0, 0, 0] = True
-            if weight is not None:
-                weight[0, 0, 0] = 0.
-            c_pos_w = 0.
-        if not neg_mask.any():
-            neg_mask[0, 0, 0] = True
-            if weight is not None:
-                weight[0, 0, 0] = 0.
-            c_neg_w = 0.
 
-        if self.loss_config['coarse_type'] == 'cross_entropy':
-            assert not self.sparse_spvs, 'Sparse Supervision for cross-entropy not implemented!'
-            conf = torch.clamp(conf, 1e-6, 1-1e-6)
-            loss_pos = - torch.log(conf[pos_mask])
-            loss_neg = - torch.log(1 - conf[neg_mask])
-            if weight is not None:
-                loss_pos = loss_pos * weight[pos_mask]
-                loss_neg = loss_neg * weight[neg_mask]
-            return c_pos_w * loss_pos.mean() + c_neg_w * loss_neg.mean()
-        elif self.loss_config['coarse_type'] == 'focal':
-            conf = torch.clamp(conf, 1e-6, 1-1e-6)
-            alpha = self.loss_config['focal_alpha']
-            gamma = self.loss_config['focal_gamma']
-
-            if self.sparse_spvs:
-                pos_conf = conf[:, :-1, :-1][pos_mask] \
-                            if self.match_type == 'sinkhorn' \
-                            else conf[pos_mask]
-                loss_pos = - alpha * torch.pow(1 - pos_conf, gamma) * pos_conf.log()
-                # calculate losses for negative samples
-                if self.match_type == 'sinkhorn':
-                    neg0, neg1 = conf_gt.sum(-1) == 0, conf_gt.sum(1) == 0
-                    neg_conf = torch.cat([conf[:, :-1, -1][neg0], conf[:, -1, :-1][neg1]], 0)
-                    loss_neg = - alpha * torch.pow(1 - neg_conf, gamma) * neg_conf.log()
-                else:
-                    # These is no dustbin for dual_softmax, so we left unmatchable patches without supervision.
-                    # we could also add 'pseudo negtive-samples'
-                    neg0 = neg1 = loss_neg = None
-                # handle loss weights
-                if weight is not None:
-                    # Different from dense-spvs, the loss w.r.t. padded regions aren't directly zeroed out,
-                    # but only through manually setting corresponding regions in sim_matrix to '-inf'.
-                    loss_pos = loss_pos * weight[pos_mask]
-                    if self.match_type == 'sinkhorn':
-                        neg_w0 = (weight.sum(-1) != 0)[neg0]
-                        neg_w1 = (weight.sum(1) != 0)[neg1]
-                        neg_mask = torch.cat([neg_w0, neg_w1], 0)
-                        loss_neg = loss_neg[neg_mask]
-
-                loss =  c_pos_w * loss_pos.mean() + c_neg_w * loss_neg.mean() \
-                            if self.match_type == 'sinkhorn' \
-                            else c_pos_w * loss_pos.mean()
-                return loss
-                # positive and negative elements occupy similar propotions. => more balanced loss weights needed
-            else:  # dense supervision (in the case of match_type=='sinkhorn', the dustbin is not supervised.)
-                loss_pos = - alpha * torch.pow(1 - conf[pos_mask], gamma) * (conf[pos_mask]).log()
-                loss_neg = - alpha * torch.pow(conf[neg_mask], gamma) * (1 - conf[neg_mask]).log()
-                if weight is not None:
-                    loss_pos = loss_pos * weight[pos_mask]
-                    loss_neg = loss_neg * weight[neg_mask]
-                return c_pos_w * loss_pos.mean(), c_neg_w * loss_neg.mean()
-                # each negative element occupy a smaller propotion than positive elements. => higher negative loss weight needed
-        else:
-            raise ValueError('Unknown coarse loss: {type}'.format(type=self.loss_config['coarse_type']))
-
-    def compute_coarse_zeroshot_loss(self, conf):
-        """
         Args:
-            conf: [(n', n'), (m', m'), ...]
+            data:
+            dense_matches: (N, 2, h0, w0)
+            b_ids: (n,)
+            grid0: (1, 1, n, 2) in [-1, 1]
+            grid1: (n, 2) in [-1, 1]
+            znum: int
 
         Returns:
+
         """
-        # conf = torch.clamp(conf, 1e-6, 1-1e-6)
-        alpha = self.loss_config['focal_alpha']
-        gamma = self.loss_config['focal_gamma']
+        grid_sample = partial(F.grid_sample, align_corners=True, mode='bilinear')
 
-        conf = [mat.diag().clamp(min=1e-6, max=1-1e-6) for mat in conf]
-        loss_pos = [(- alpha * torch.pow(1 - x, gamma) * x.log()).mean() for x in conf]
-        loss_pos = sum(loss_pos) / len(loss_pos)
+        pred = [grid_sample(dense_matches[[i]], grid0[:, :, b_ids == i]) for i in range(znum)]  # [(1, 2, 1, n)]
+        pred = torch.cat([x.squeeze().transpose(0, 1) for x in pred], dim=0)  # (n, 2) in [-1, 1]
 
-        return loss_pos
+        gd = (pred - grid1).norm(dim=-1)  # (n,)
 
-    def compute_fine_loss(self, expec_f, expec_f_gt):
-        if self.fine_type == 'l2_with_std':
-            return self._compute_fine_loss_l2_std(expec_f, expec_f_gt)
-        elif self.fine_type == 'l2':
-            return self._compute_fine_loss_l2(expec_f, expec_f_gt)
-        else:
-            raise NotImplementedError()
+        gd[torch.isnan(gd)] = 0
+        gd[torch.isinf(gd)] = 0
 
-    def _compute_fine_loss_l2(self, expec_f, expec_f_gt):
+        return gd
+
+    def zeroshot_ce(self, dense_certainty, b_ids, grid0, znum):
         """
+
         Args:
-            expec_f (torch.Tensor): [M, 2] <x, y>
-            expec_f_gt (torch.Tensor): [M, 2] <x, y>
-        """
-        correct_mask = torch.linalg.norm(expec_f_gt, ord=float('inf'), dim=1) < self.correct_thr
-        if correct_mask.sum() == 0:
-            if self.training:  # this seldomly happen when training, since we pad prediction with gt
-                logger.warning("assign a false supervision to avoid ddp deadlock")
-                correct_mask[0] = True
-            else:
-                return None
-        offset_l2 = ((expec_f_gt[correct_mask] - expec_f[correct_mask]) ** 2).sum(-1)
-        return offset_l2.mean()
+            dense_certainty: (N, 1, h0, w0)
+            b_ids: (n,)
+            grid0: (1, 1, n, 2) in [-1, 1]
+            znum: int
 
-    def _compute_fine_loss_l2_std(self, expec_f, expec_f_gt):
+        Returns:
+
         """
+        grid_sample = partial(F.grid_sample, align_corners=True, mode='bilinear')
+
+        pred = [grid_sample(dense_certainty[[i]], grid0[:, :, b_ids == i]) for i in range(znum)]  # [(1, 1, 1, n)]
+        pred = torch.cat([x.squeeze() for x in pred], dim=0)  # (n) in [0, 1]
+
+        ce_loss = F.binary_cross_entropy_with_logits(pred, pred.new_ones(pred.size()), reduction='none')
+        ce_loss[torch.isnan(ce_loss)] = 0
+        ce_loss[torch.isinf(ce_loss)] = 0
+        ce_loss = torch.stack([ce_loss[b_ids == i].mean() for i in range(znum)])
+
+        return ce_loss
+
+    def dense_depth_loss(self, dense_certainty, prob, gd, scale, eps=1e-8):
+        smooth_prob = prob
+        ce_loss = F.binary_cross_entropy_with_logits(dense_certainty[:, 0], smooth_prob, reduction='none')
+        depth_loss = gd[prob > 0]
+        if not torch.any(prob > 0).item():
+            depth_loss = gd * 0.0  # Prevent issues where prob is 0 everywhere
+        ce_loss[torch.isnan(ce_loss)] = 0
+        ce_loss[torch.isinf(ce_loss)] = 0
+        ce_loss = ce_loss.mean(dim=(1, 2))
+        depth_loss[torch.isnan(depth_loss)] = 0
+        depth_loss[torch.isinf(depth_loss)] = 0
+        return {
+            f"CE Loss [{scale}]": ce_loss,
+            f"Depth Loss [{scale}]": depth_loss.mean(),
+        }
+
+    def forward(self, batch):
+        """[summary]
+
         Args:
-            expec_f (torch.Tensor): [M, 3] <x, y, std>
-            expec_f_gt (torch.Tensor): [M, 2] <x, y>
-        """
-        # correct_mask tells you which pair to compute fine-loss
-        correct_mask = torch.linalg.norm(expec_f_gt, ord=float('inf'), dim=1) < self.correct_thr
+            batch ([dict: 9]):
+                "dense_corresps" ([dict: 6]): has keys: 1, 2, 4, 8, 16, 32
+                    each item has a {dict: 2} with keys
+                    "dense_certainty": [b, 1, h/scale, w/scale], (h, w) is the network input size of image
+                    "dense_flow": [b, 2, h/scale, w/scale]
+                "K1": [b, 3, 3]
+                "K2": [b, 3, 3]
+                "query": [b, 3, h, w]
+                "query_depth": [b, h, w]
+                "query_identifier" (list): length is b
+                "support": [b, 3, h, w]
+                "support_depth": [b, h, w]
+                "support_identifier" (list): length is b
+                "T_1to2": [b, 4, 4]
 
-        # use std as weight that measures uncertainty
-        std = expec_f[:, 2]
-        inverse_std = 1. / torch.clamp(std, min=1e-10)
-        weight = (inverse_std / torch.mean(inverse_std)).detach()  # avoid minizing loss through increase std
-
-        # corner case: no correct coarse match found
-        if not correct_mask.any():
-            if self.training:  # this seldomly happen during training, since we pad prediction with gt, sometimes there is not coarse-level gt at all.
-                # logger.warning("assign a false supervision to avoid ddp deadlock")
-                correct_mask[0] = True
-                weight[0] = 0.
-            else:
-                return None
-
-        # l2 loss with std
-        offset_l2 = ((expec_f_gt[correct_mask] - expec_f[correct_mask, :2]) ** 2).sum(-1)
-        loss = (offset_l2 * weight[correct_mask]).mean()
-
-        return loss
-
-    @torch.no_grad()
-    def compute_c_weight(self, data):
-        """ compute element-wise weights for computing coarse-level loss. """
-        if 'mask0' in data:
-            c_weight = (data['mask0'].flatten(-2)[..., None] * data['mask1'].flatten(-2)[:, None]).float()
-        else:
-            c_weight = None
-        return c_weight
-
-    def forward(self, data):
-        """
-        Update:
-            data (dict): update{
-                'loss': [1] the reduced loss across a batch,
-                'loss_scalars' (dict): loss scalars for tensorboard_record
-            }
+        Returns:
+            [type]: [description]
         """
 
+        loss = []
         loss_scalars = {}
 
-        # 0. compute element-wise loss weight
-        c_weight = self.compute_c_weight(data)
+        dense_corresps = batch["dense_corresps"]
+        scales = list(dense_corresps.keys())
 
-        loss_c, loss_f = [], []
-
-        # 1. coarse-level loss
-        gt = data['gt']
+        gt = batch['gt']
         if gt.sum() > 0:
-            loss_cg, loss_cn = self.compute_coarse_loss(
-                data['conf_matrix_with_bin']
-                if self.sparse_spvs and self.match_type == 'sinkhorn'
-                else data['conf_matrix'], data['conf_matrix_gt'], weight=c_weight[gt]
-            )
-            loss_c.append(loss_cg * self.loss_config['coarse_weight'])
-            # loss += loss_cn * self.loss_config['coarse_weight']
-            loss_scalars.update({"GroundTruth Coarse Positive Loss": loss_cg.clone().detach()})
-            loss_scalars.update({"GroundTruth Coarse Negative Loss": loss_cn.clone().detach()})
+            gt_loss = 0.0
+            prev_gd = None
+            not_scannet_mask = gt.new_tensor([x != 'ScanNet' for x in batch['dataset_name']])[gt]
+            for scale in scales:
+                dense_scale_certainty, dense_scale_coords = \
+                    dense_corresps[scale]["dense_certainty"][gt], \
+                    dense_corresps[scale]["dense_flow"][gt]
+                dense_scale_coords = rearrange(dense_scale_coords,
+                                               "b d h w -> b h w d")  # [b, h/scale, w/scale, 2]
+                h, w = dense_scale_coords.shape[1:3]
+                gd, prob = self.geometric_dist(batch, dense_scale_coords)
+                if scale <= self.local_largest_scale and self.local_loss:  # scale <= 8 and True # Thought here is that fine matching loss should not be punished by coarse mistakes, but should identify wrong matching
+                    prob = prob * (
+                            F.interpolate(prev_gd[:, None], size=(h, w), mode="nearest")[:, 0]
+                            < (2 / 512) * (self.local_dist * scale)
+                    )
+                depth_losses = self.dense_depth_loss(dense_scale_certainty, prob, gd, scale)
+                ce_loss = depth_losses[f"CE Loss [{scale}]"]
+                # if torch.isnan(ce_loss).any():
+                #     ce_loss = 0
+                dp_loss = depth_losses[f"Depth Loss [{scale}]"]
+                # if torch.isnan(dp_loss).any():
+                #     dp_loss = 0
+                scale_loss = (self.ce_weight * not_scannet_mask * ce_loss).sum() / (not_scannet_mask.sum() + 1e-8) + dp_loss# scale ce loss for coarser scales
+                if self.scale_normalize:  # self.scale_normalize is False
+                    scale_loss = scale_loss * 1 / scale
+                gt_loss = gt_loss + scale_loss
+                loss_scalars.update({'GT '+k: v.clone().detach()
+                                     for k, v in depth_losses.items()})
+                prev_gd = gd.detach()
+            loss.append(gt_loss)
 
-            # 2. fine-level loss
-            Ng = len(data['b_ids'])
-            loss_fg = self.compute_fine_loss(data['expec_f'][:Ng], data['expec_f_gt'])
-            if loss_fg is not None:
-                loss_f.append(loss_fg * self.loss_config['fine_weight'])
-                loss_scalars.update({"GroundTruth Fine Loss": loss_fg.clone().detach()})
-            else:
-                assert self.training is False
-                loss_fg = torch.tensor(1.).to(c_weight.device)
-                loss_f.append(loss_fg * self.loss_config['fine_weight'])
-                loss_scalars.update({'GroundTruth Fine Loss': loss_fg})  # 1 is the upper bound
-
-        zs = data['zs']
+        zs = batch['zs']
         if zs.sum() > 0:
-            # 1. zero-shot coarse-level loss
-            loss_cz = self.compute_coarse_zeroshot_loss(data['zs_conf_matrix'])
-            loss_c.append(loss_cz)
-            loss_scalars.update({"Zeroshot Coarse Positive Loss": loss_cz.clone().detach()})
+            znum = zs.sum()
+            pseudo_labels = batch['pseudo_labels'][zs]
+            b_ids, n_ids = torch.where(pseudo_labels.sum(dim=2) > 0)
+            pseudo_labels = pseudo_labels[b_ids, n_ids]  # (n, 4)
+            pt0 = pseudo_labels[:, :2]  # (n, 2), in hw_i(image) size coordinates
+            pt1 = pseudo_labels[:, 2:]  # (n, 2), in hw_i(image) size coordinates
 
-            # 2. fine-level loss
-            Nz = len(data['zs_b_ids'])
-            loss_fz = self.compute_fine_loss(data['expec_f'][-Nz:], data['expec_f_zs'])
-            if loss_fz is not None:
-                loss_f.append(loss_fz)
-                loss_scalars.update({"Zeroshot Fine Loss":  loss_fz.clone().detach()})
+            sample_num = 2048
+            unique_b = torch.unique(b_ids)
+            if (sample_num > 0) and len(b_ids) > (sample_num * len(unique_b)):
+                indices = torch.cat([
+                    torch.randperm((b_ids == b).sum(), device=pseudo_labels.device)[:sample_num]
+                    + (b_ids < b).sum()
+                    for b in unique_b])
+                b_ids, pt0, pt1 = b_ids[indices], pt0[indices], pt1[indices]
 
-        loss_c = sum(loss_c) / len(loss_c)
-        loss_f = sum(loss_f) / len(loss_f)
-        loss = loss_c + loss_f
+            grid0 = pt_to_grid(pt0.clone()[None], batch['hw0_i'])  # (1, 1, n, 2) in [-1, 1]
+            grid1 = pt_to_grid(pt1.clone()[None], batch['hw1_i']).squeeze()  # (n, 2) in [-1, 1]
 
+            zs_loss = 0.0
+            for scale in scales:
+                dense_scale_certainty, dense_scale_coords = \
+                    dense_corresps[scale]["dense_certainty"][zs], \
+                    dense_corresps[scale]["dense_flow"][zs]
+                gd = self.zeroshot_dist(batch, dense_scale_coords, b_ids, grid0, grid1, znum)
+                dp_loss = gd.mean()
+                # if torch.isnan(dp_loss).any():
+                #     dp_loss = 0
+                zs_loss = zs_loss + dp_loss
+                ce = self.zeroshot_ce(dense_scale_certainty, b_ids, grid0, znum)
+                ce_loss = (self.ce_weight * ce).sum() / (znum + 1e-8)
+                # zs_loss = zs_loss + ce_loss
+                loss_scalars.update({f"ZS Depth Loss [{scale}]": dp_loss.clone().detach()})
+                loss_scalars.update({f"ZS CE Loss [{scale}]": ce_loss.clone().detach()})
+            loss.append(zs_loss)
+
+        loss = sum(loss) / len(loss)
         loss_scalars.update({'Total Loss': loss.clone().detach()})
         details = dict(
             loss=loss, loss_scalars=loss_scalars

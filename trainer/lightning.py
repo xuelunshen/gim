@@ -10,9 +10,8 @@ import pytorch_lightning as pl
 from pathlib import Path
 from pytorch_lightning.callbacks import ModelCheckpoint, ModelSummary
 
-from modules.loftr import LoFTR
-from modules.loss import Loss
-from modules.utils.supervision import spvs_coarse, spvs_fine
+from modules.dkm import get_model
+from modules.loss import DepthRegressionLoss
 from tools.comm import all_gather
 from tools.metrics import aggregate_metrics
 from tools.metrics import compute_symmetrical_epipolar_errors, compute_pose_errors
@@ -30,8 +29,8 @@ class Trainer(pl.LightningModule):
         self.tcfg = tcfg
         self.ncfg = ncfg
         ncfg = lower_config(ncfg)
-        self.model = LoFTR(ncfg['loftr'])
-        self.loss_func = Loss(ncfg)
+        self.model = get_model(pretrained_backbone=True, w=896, h=672)
+        self.loss_func = DepthRegressionLoss(ce_weight=0.01)
 
         self.train_step = 0
         self.valid_step = 0
@@ -66,7 +65,7 @@ class Trainer(pl.LightningModule):
         return [auc_callback, ModelSummary(max_depth=3)]
 
     def configure_optimizers(self):
-        optimizer = build_optimizer(self.model, self.tcfg, key='encode')
+        optimizer = build_optimizer(self.model, self.tcfg, key='encoder')
         return optimizer
 
     def learning_rate_step(self):
@@ -86,7 +85,7 @@ class Trainer(pl.LightningModule):
             remain_step = all_epoch_step - self.trainer.global_step
             lr = remain_step / all_epoch_step * (base_lr - min_lr) + min_lr
 
-        p = 0.1
+        p = 0.05
         for i, pg in enumerate(optimizer.param_groups):
             pg['lr'] = lr*p if i == 0 else lr
 
@@ -113,14 +112,11 @@ class Trainer(pl.LightningModule):
             output:
                 'prob*': {Tensor: ([b, num_patches])}
         """
-
-        config = self.ncfg['LOFTR']
-
-        if data['gt'].sum(): spvs_coarse(data, config['RESOLUTION'])
-
+        data.update({
+            'hw0_i': data['image0'].shape[2:],
+            'hw1_i': data['image1'].shape[2:]
+        })
         self.model(data)
-
-        if data['gt'].sum(): spvs_fine(data, config['RESOLUTION'], config['FINE_WINDOW_SIZE'])
 
     def compute_metrics(self, batch):
         compute_symmetrical_epipolar_errors(batch)  # compute epi_errs for each match
