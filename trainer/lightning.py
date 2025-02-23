@@ -167,6 +167,7 @@ class Trainer(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         self.forward(batch)
+        self.inference(batch)
         details = self.loss_func(batch)
         metrics = self.compute_metrics(batch)
         dicts = self.valid_log(batch_idx, batch, details)
@@ -212,3 +213,6 @@ class Trainer(pl.LightningModule):
             self.valid_step += 1
 
         self.log_valids = {k: 0 for k in self.log_valids.keys()}
+
+    def inference(self, data):
+        self.model.inference(data)
