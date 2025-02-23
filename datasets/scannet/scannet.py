@@ -118,11 +118,11 @@ class ScanNetDataset(RGBDDataset):
         image0, color0, scale0, rands0, offset0, hlip0, vflip0, resize0, mask0 = read_images(
             img_path0, self.max_resize, self.df, self.padding,
             np.random.choice([self.augment_fn, None], p=[0.5, 0.5]),
-            aug_prob=0.5 if self.mode == 'train' else 1.0, read_size=(640, 480))
+            aug_prob=0.2 if self.mode == 'train' else 1.0, read_size=(640, 480))
         image1, color1, scale1, rands1, offset1, hlip1, vflip1, resize1, mask1 = read_images(
             img_path1, self.max_resize, self.df, self.padding,
             np.random.choice([self.augment_fn, None], p=[0.5, 0.5]),
-            aug_prob=0.5 if self.mode == 'train' else 1.0, read_size=(640, 480))
+            aug_prob=0.2 if self.mode == 'train' else 1.0, read_size=(640, 480))
 
         if self.mode == 'train' and random.uniform(0, 1) > 0.1:
             deg = 180

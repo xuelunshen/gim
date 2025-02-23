@@ -10,8 +10,8 @@ import pytorch_lightning as pl
 from pathlib import Path
 from pytorch_lightning.callbacks import ModelCheckpoint, ModelSummary
 
-from modules.dkm import get_model
-from modules.loss import DepthRegressionLoss
+from modules.roma import get_model
+from modules.loss import RobustLosses
 from tools.comm import all_gather
 from tools.metrics import aggregate_metrics
 from tools.metrics import compute_symmetrical_epipolar_errors, compute_pose_errors
@@ -29,8 +29,19 @@ class Trainer(pl.LightningModule):
         self.tcfg = tcfg
         self.ncfg = ncfg
         ncfg = lower_config(ncfg)
-        self.model = get_model(pretrained_backbone=True, w=896, h=672)
-        self.loss_func = DepthRegressionLoss(ce_weight=0.01)
+        self.model = get_model(
+            img_size=self.pcfg.img_size,
+            pretrained_backbone=True,
+            attenuate_cert = False
+        )
+        self.loss_func = RobustLosses(
+            ce_weight=0.01,
+            local_dist={1:4, 2:4, 4:8, 8:8},
+            local_largest_scale=8,
+            depth_interpolation_mode='bilinear',
+            alpha = 0.5,
+            c = 1e-4,
+        )
 
         self.train_step = 0
         self.valid_step = 0

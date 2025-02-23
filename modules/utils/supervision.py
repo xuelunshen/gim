@@ -199,3 +199,36 @@ def spvs_fine(data, scale, radius):
     expec_f_gt = (w_pt0_i[b_ids, i_ids] - pt1_i[b_ids, j_ids]) / scale / radius  # [M, 2]
     # expec_f_gt = torch.cat([expec_f_gt, data['zs_expec_f_gt']], dim=0) if training else expec_f_gt
     data.update({"expec_f_gt": expec_f_gt})
+
+
+@torch.no_grad()
+def get_gt_warp(data, N, h0, w0, device):
+    gt = data['gt']
+    H0, W0 = data['image0'].shape[-2:]
+    scale0 = data['scale0'][:, None][gt]
+    scale1 = data['scale1'][:, None][gt]
+
+    Hq_aug = data['Hq_aug'][gt]  # (bs, 3, 3)
+    offset0, offset1 = data['offset0'][:, None][gt], data['offset1'][:, None][gt]  # (bs, 1, 2) - <x, y>
+
+    grid_pt0 = torch.meshgrid(*[(torch.linspace(-1 + 1 / n, 1 - 1 / n, n, device=device) + 1) / 2 * m for n, m in zip([h0, w0], [H0, W0])])
+    grid_pt0_fs = torch.stack((grid_pt0[1], grid_pt0[0]), dim=-1)[None].expand(N, h0, w0, 2).reshape(N, h0 * w0, 2)
+    grid_pt0_rs = Flip(grid_pt0_fs, data['hflip0'][gt], data['vflip0'][gt], data['resize0'][:, 1][gt] - 1, data['resize0'][:, 0][gt] - 1)  # rectified flip
+    grid_pt0_rs += offset0
+    grid_pt0_i = grid_pt0_rs * scale0
+
+    pos_mask0, neg_mask0, w_pt0_i = warp_kpts(grid_pt0_i, data['depth0'][gt], data['depth1'][gt], data['T_0to1'][gt], data['K0'][gt], data['K1'][gt], data['K0_'][gt], data['K1_'][gt], data['imsize1'][gt])
+
+    w_pt0_s = w_pt0_i / scale1
+    w_pt0_s = w_pt0_s - offset1
+    w_pt0_s = Flip(w_pt0_s, data['hflip1'][gt], data['vflip1'][gt], data['resize1'][:, 1][gt] - 1, data['resize1'][:, 0][gt] - 1)
+    w_pt0_s = torch.cat([w_pt0_s, torch.ones_like(w_pt0_s[:, :, :1])], dim=-1)
+    w_pt0_s = torch.einsum('bij,bjk->bik', w_pt0_s, Hq_aug.transpose(1, 2))
+    w_pt0_s = w_pt0_s[..., :2] / (w_pt0_s[..., [2]] + 1e-8)
+    w_pt0_s[..., 0] = (w_pt0_s[..., 0] / (W0 - 1)) * 2 - 1
+    w_pt0_s[..., 1] = (w_pt0_s[..., 1] / (H0 - 1)) * 2 - 1
+
+    prob = pos_mask0.float().reshape(N, h0, w0)
+
+    x2 = w_pt0_s.reshape(N, h0, w0, 2)
+    return x2, prob
