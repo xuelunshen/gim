@@ -95,7 +95,7 @@ git clone https://github.com/xuelunshen/gim.git
 cd gim
 ```
 
-2. Download `gim_dkm` model weight from [Google Drive](https://drive.google.com/file/d/1gk97V4IROnR1Nprq10W9NCFUv2mxXR_-/view?usp=sharing) or [OneDrive](https://stuxmueducn-my.sharepoint.com/:u:/g/personal/xuelun_stu_xmu_edu_cn/EdJOibZ8VABOoKoyOHWo8ZEBHd_MyHbSvhRyT_o40SIPGA?e=GCjGZE)
+2. Download `gim_roma` model weight from [Google Drive](https://drive.google.com/file/d/1OGNbJdw9zn5zHC4WNQ0IMqdGCS0HMUfe/view?usp=sharing) or [OneDrive](https://stuxmueducn-my.sharepoint.com/:u:/g/personal/xuelun_stu_xmu_edu_cn/EYaa2YFWyLlIsegtq3eM1EkBqw4AH0yy2f2ZRdhADXKWtg?e=VVab9g), download `gim_dkm` model weight from [Google Drive](https://drive.google.com/file/d/1gk97V4IROnR1Nprq10W9NCFUv2mxXR_-/view?usp=sharing) or [OneDrive](https://stuxmueducn-my.sharepoint.com/:u:/g/personal/xuelun_stu_xmu_edu_cn/EdJOibZ8VABOoKoyOHWo8ZEBHd_MyHbSvhRyT_o40SIPGA?e=GCjGZE)
 
 3. Put it on the folder `weights`
 
@@ -106,6 +106,8 @@ cd gim
 <summary><b>[ Click to show commands ]</b></summary>
 
 ```bash
+python demo.py --model gim_roma
+# or
 python demo.py --model gim_dkm
 # or
 python demo.py --model gim_loftr
@@ -309,6 +311,8 @@ sh reconstruction.sh room gim_lightglue
 The number **1** below represents the number of GPUs you want to use. If you want to use **2 GPUs**, change the number **1** to **2**.
 
 ```bash
+sh TEST_GIM_ROMA.sh 1
+# or
 sh TEST_GIM_DKM.sh 1
 # or
 sh TEST_GIM_LOFTR.sh 1

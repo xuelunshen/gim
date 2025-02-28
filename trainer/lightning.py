@@ -35,6 +35,10 @@ class Trainer(pl.LightningModule):
             model.upsample_preds = True
             model.upsample_res = (1152, 1536)
             model.use_soft_mutual_nearest_neighbours = False
+        elif pcfg.weight == 'gim_roma':
+            from networks.roma.roma import RoMa
+            detector = None
+            model = RoMa(img_size=[672])
         elif pcfg.weight == 'gim_loftr':
             from networks.loftr.loftr import LoFTR as MODEL
             detector = None
@@ -72,6 +76,10 @@ class Trainer(pl.LightningModule):
                         state_dict[k.replace('model.', '', 1)] = state_dict.pop(k)
                     if 'encoder.net.fc' in k:
                         state_dict.pop(k)
+            elif pcfg.weight == 'gim_roma':
+                for k in list(state_dict.keys()):
+                    if k.startswith('model.'):
+                        state_dict[k.replace('model.', '', 1)] = state_dict.pop(k)
             elif pcfg.weight == 'gim_lightglue':
                 for k in list(state_dict.keys()):
                     if k.startswith('model.'):
@@ -114,7 +122,7 @@ class Trainer(pl.LightningModule):
         return metrics
 
     def inference(self, data):
-        if self.pcfg.weight == 'gim_dkm':
+        if self.pcfg.weight == 'gim_dkm' or self.pcfg.weight == 'gim_roma':
             self.gim_dkm_inference(data)
         elif self.pcfg.weight == 'gim_loftr':
             self.gim_loftr_inference(data)

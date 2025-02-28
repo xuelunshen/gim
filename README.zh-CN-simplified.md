@@ -95,7 +95,7 @@ git clone https://github.com/xuelunshen/gim.git
 cd gim
 ```
 
-2. 从 [Google Drive](https://drive.google.com/file/d/1gk97V4IROnR1Nprq10W9NCFUv2mxXR_-/view?usp=sharing) 或者 [OneDrive](https://stuxmueducn-my.sharepoint.com/:u:/g/personal/xuelun_stu_xmu_edu_cn/EdJOibZ8VABOoKoyOHWo8ZEBHd_MyHbSvhRyT_o40SIPGA?e=GCjGZE) 下载 `gim_dkm` 的模型参数
+2. 从 [Google Drive](https://drive.google.com/file/d/1OGNbJdw9zn5zHC4WNQ0IMqdGCS0HMUfe/view?usp=sharing) 或者 [OneDrive](https://stuxmueducn-my.sharepoint.com/:u:/g/personal/xuelun_stu_xmu_edu_cn/EYaa2YFWyLlIsegtq3eM1EkBqw4AH0yy2f2ZRdhADXKWtg?e=VVab9g) 下载 `gim_roma` 的模型参数, 从 [Google Drive](https://drive.google.com/file/d/1gk97V4IROnR1Nprq10W9NCFUv2mxXR_-/view?usp=sharing) 或者 [OneDrive](https://stuxmueducn-my.sharepoint.com/:u:/g/personal/xuelun_stu_xmu_edu_cn/EdJOibZ8VABOoKoyOHWo8ZEBHd_MyHbSvhRyT_o40SIPGA?e=GCjGZE) 下载 `gim_dkm` 的模型参数
 
 3. 将模型参数放在文件夹 `weights` 里面
 
@@ -106,6 +106,8 @@ cd gim
 <summary><b>[ 点击查看运行命令 ]</b></summary>
 
 ```bash
+python demo.py --model gim_roma
+# or
 python demo.py --model gim_dkm
 # or
 python demo.py --model gim_loftr
@@ -309,6 +311,8 @@ sh reconstruction.sh room gim_lightglue
 下面的数字 **1** 代表你要使用的 gpu 数量,如果你想用 **2** 块gpu, 则将数字 **1** 改为 **2**.
 
 ```bash
+sh TEST_GIM_ROMA.sh 1
+# or
 sh TEST_GIM_DKM.sh 1
 # or
 sh TEST_GIM_LOFTR.sh 1

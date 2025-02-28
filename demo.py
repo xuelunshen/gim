@@ -11,6 +11,7 @@ import torchvision.transforms.functional as F
 
 from os.path import join
 from tools import get_padding_size
+from networks.roma.roma import RoMa
 from networks.loftr.loftr import LoFTR
 from networks.loftr.misc import lower_config
 from networks.loftr.config import get_cfg_defaults
@@ -309,7 +310,7 @@ def fig2im(fig):
 
 
 if __name__ == '__main__':
-    model_zoo = ['gim_dkm', 'gim_loftr', 'gim_lightglue']
+    model_zoo = ['gim_roma', 'gim_dkm', 'gim_loftr', 'gim_lightglue']
 
     # model
     parser = argparse.ArgumentParser()
@@ -326,6 +327,9 @@ if __name__ == '__main__':
     if args.model == 'gim_dkm':
         ckpt = 'gim_dkm_100h.ckpt'
         model = DKMv3(weights=None, h=672, w=896)
+    elif args.model == 'gim_roma':
+        ckpt = 'gim_roma_100h.ckpt'
+        model = RoMa(img_size=[672])
     elif args.model == 'gim_loftr':
         ckpt = 'gim_loftr_50h.ckpt'
         model = LoFTR(lower_config(get_cfg_defaults())['loftr'])
@@ -356,6 +360,14 @@ if __name__ == '__main__':
                 state_dict[k.replace('model.', '', 1)] = state_dict.pop(k)
             if 'encoder.net.fc' in k:
                 state_dict.pop(k)
+        model.load_state_dict(state_dict)
+    
+    elif args.model == 'gim_roma':
+        state_dict = torch.load(checkpoints_path, map_location='cpu')
+        if 'state_dict' in state_dict.keys(): state_dict = state_dict['state_dict']
+        for k in list(state_dict.keys()):
+            if k.startswith('model.'):
+                state_dict[k.replace('model.', '', 1)] = state_dict.pop(k)
         model.load_state_dict(state_dict)
 
     elif args.model == 'gim_loftr':
@@ -405,9 +417,13 @@ if __name__ == '__main__':
     b_ids, mconf, kpts0, kpts1 = None, None, None, None
     data = dict(color0=image0, color1=image1, image0=image0, image1=image1)
 
-    if args.model == 'gim_dkm':
-        orig_width0, orig_height0, pad_left0, pad_right0, pad_top0, pad_bottom0 = get_padding_size(image0, 672, 896)
-        orig_width1, orig_height1, pad_left1, pad_right1, pad_top1, pad_bottom1 = get_padding_size(image1, 672, 896)
+    if args.model == 'gim_dkm' or args.model == 'gim_roma':
+        if args.model == 'gim_dkm':
+            width, height = 672, 896
+        elif args.model == 'gim_roma':
+            width, height = 672, 672
+        orig_width0, orig_height0, pad_left0, pad_right0, pad_top0, pad_bottom0 = get_padding_size(image0, width, height)
+        orig_width1, orig_height1, pad_left1, pad_right1, pad_top1, pad_bottom1 = get_padding_size(image1, width, height)
         image0_ = torch.nn.functional.pad(image0, (pad_left0, pad_right0, pad_top0, pad_bottom0))
         image1_ = torch.nn.functional.pad(image1, (pad_left1, pad_right1, pad_top1, pad_bottom1))
 

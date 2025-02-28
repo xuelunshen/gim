@@ -58,7 +58,7 @@ RANSACs = dict(
     PARALLEL = cv2.USAC_PARALLEL,
 )
 
-MODEL_ZOO = ['gim_dkm', 'gim_loftr', 'gim_lightglue', 'root_sift']
+MODEL_ZOO = ['gim_roma', 'gim_dkm', 'gim_loftr', 'gim_lightglue', 'root_sift']
 
 
 if __name__ == '__main__':
