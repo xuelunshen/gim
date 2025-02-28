@@ -38,8 +38,8 @@
 - [x] **ZEB**: **Z**ero-shot **E**valuation **B**enchmark
 - [x] Video Preprocess Code
 - [x] 3D Reconstruction
-- [ ] Models
-  - [ ] gim_roma
+- [x] Models
+  - [x] gim_roma
   - [x] gim_dkm
   - [x] gim_loftr
   - [x] gim_lightglue
@@ -48,8 +48,6 @@
   - [x] gim_dkm
   - [x] gim_loftr
   - [x] gim_lightglue
-
-> We are actively continuing with the remaining open-source work and appreciate everyone's attention.
 
 ## 🤗 Online demo
 

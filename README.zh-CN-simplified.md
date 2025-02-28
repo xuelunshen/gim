@@ -38,8 +38,8 @@
 - [x] **ZEB**: **Z**ero-shot **E**valuation **B**enchmark
 - [x] 视频处理代码
 - [x] 三维重建
-- [ ] 模型
-  - [ ] gim_roma
+- [x] 模型
+  - [x] gim_roma
   - [x] gim_dkm
   - [x] gim_loftr
   - [x] gim_lightglue
@@ -48,8 +48,6 @@
   - [x] gim_dkm
   - [x] gim_loftr
   - [x] gim_lightglue
-
-> 剩余的开源工作我们还在抓紧进行, 感谢大家的关注.
 
 ## 🤗 在线体验
 
