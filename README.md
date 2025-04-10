@@ -55,34 +55,12 @@ Go to [Huggingface](https://huggingface.co/spaces/xuelunshen/gim-online) to quic
 
 ## ⚙️ Environment
 
-I set up the running environment on a new machine using the commands listed below.
-
-<p></p>
-<details>
-<summary><b>[ Click to show commands ]</b></summary>
+Use the following command to create the environment
 
 ```bash
-conda create -n gim python=3.9
-conda install pytorch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 cudatoolkit=11.3 -c pytorch -c conda-forge
-conda install xformers -c xformers
-pip install albumentations==1.0.1 --no-binary=imgaug,albumentations
-pip install colour-demosaicing==0.2.2
-pip install pytorch-lightning==1.5.10
-pip install opencv-python==4.5.3.56
-pip install imagesize==1.2.0
-pip install kornia==0.6.10
-pip install einops==0.3.0
-pip install loguru==0.5.3
-pip install joblib==1.0.1
-pip install yacs==0.1.8
-pip install h5py==3.1.0
-pip install matplotlib
-pip install omegaconf
-pip install triton
+conda create -f environment.yaml
+conda activate gim
 ```
-
-</details>
-<p></p>
 
 ## 🔨 How to Use the `GIM` Series Matching Network
 

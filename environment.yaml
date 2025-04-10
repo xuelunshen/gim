@@ -1,0 +1,32 @@
+name: gim
+channels:
+  - pytorch
+  - defaults
+  - xformers
+  - conda-forge
+dependencies:
+  - python=3.9
+  - pip=20.3
+  - cudatoolkit=11.3
+  - pytorch=1.12.1
+  - torchvision=0.13.1
+  - numpy=1.23.1
+  - xformers=0.0.20
+  - pip:
+      - --index-url https://pypi.tuna.tsinghua.edu.cn/simple
+      - --extra-index-url https://pypi.org/simple
+      - albumentations==1.0.1 --no-binary=imgaug,albumentations
+      - colour-demosaicing==0.2.2
+      - pytorch-lightning==1.5.10
+      - opencv-python==4.5.3.56
+      - imagesize==1.2.0
+      - kornia==0.6.10
+      - einops==0.3.0
+      - loguru==0.5.3
+      - joblib==1.0.1
+      - yacs==0.1.8
+      - h5py==3.1.0
+      - matplotlib
+      - omegaconf
+      - triton
+      - torchmetrics==1.7.0
