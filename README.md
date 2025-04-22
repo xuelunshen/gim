@@ -5,7 +5,6 @@
 
 <h2 align="center">GIM: Learning Generalizable Image Matcher From Internet Videos</h2>
 
-
 <div align="center">
 	<a href="https://www.youtube.com/embed/FU_MJLD8LeY">
 		<img src="assets/demo/video.png" width="50%" alt="Overview Video">
