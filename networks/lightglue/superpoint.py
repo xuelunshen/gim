@@ -175,7 +175,9 @@ class SuperPoint(BaseModel):
 
     def _init(self, conf):
         self.relu = nn.ReLU(inplace=True)
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        # Use functional max_pool2d instead of nn.MaxPool2d for better ONNX compatibility
+        self.pool_kernel_size = 2
+        self.pool_stride = 2
         c1, c2, c3, c4, c5 = 64, 64, 128, 128, 256
 
         self.conv1a = nn.Conv2d(1, c1, kernel_size=3, stride=1, padding=1)
@@ -213,13 +215,13 @@ class SuperPoint(BaseModel):
         # Shared Encoder
         x = self.relu(self.conv1a(image))
         x = self.relu(self.conv1b(x))
-        x = self.pool(x)
+        x = torch.nn.functional.max_pool2d(x, kernel_size=self.pool_kernel_size, stride=self.pool_stride)
         x = self.relu(self.conv2a(x))
         x = self.relu(self.conv2b(x))
-        x = self.pool(x)
+        x = torch.nn.functional.max_pool2d(x, kernel_size=self.pool_kernel_size, stride=self.pool_stride)
         x = self.relu(self.conv3a(x))
         x = self.relu(self.conv3b(x))
-        x = self.pool(x)
+        x = torch.nn.functional.max_pool2d(x, kernel_size=self.pool_kernel_size, stride=self.pool_stride)
         x = self.relu(self.conv4a(x))
         x = self.relu(self.conv4b(x))
 

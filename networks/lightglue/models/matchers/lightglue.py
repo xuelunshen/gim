@@ -68,13 +68,13 @@ class TokenConfidence(nn.Module):
     def forward(self, desc0: torch.Tensor, desc1: torch.Tensor):
         """get confidence tokens"""
         return (
-            self.token(desc0.detach()).squeeze(-1),
-            self.token(desc1.detach()).squeeze(-1),
+            self.token(desc0.detach())[..., 0],
+            self.token(desc1.detach())[..., 0],
         )
 
     def loss(self, desc0, desc1, la_now, la_final):
-        logit0 = self.token[0](desc0.detach()).squeeze(-1)
-        logit1 = self.token[0](desc1.detach()).squeeze(-1)
+        logit0 = self.token[0](desc0.detach())[..., 0]
+        logit1 = self.token[0](desc1.detach())[..., 0]
         la_now, la_final = la_now.detach(), la_final.detach()
         correct0 = (
             la_final[:, :-1, :].max(-1).indices == la_now[:, :-1, :].max(-1).indices
@@ -148,12 +148,12 @@ class SelfBlock(nn.Module):
         mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         qkv = self.Wqkv(x)
-        qkv = qkv.unflatten(-1, (self.num_heads, -1, 3)).transpose(1, 2)
+        qkv = qkv.unflatten(-1, (self.num_heads, -1, 3)).permute(0, 2, 1, 3, 4)
         q, k, v = qkv[..., 0], qkv[..., 1], qkv[..., 2]
         q = apply_cached_rotary_emb(encoding, q)
         k = apply_cached_rotary_emb(encoding, k)
         context = self.inner_attn(q, k, v, mask=mask)
-        message = self.out_proj(context.transpose(1, 2).flatten(start_dim=-2))
+        message = self.out_proj(context.permute(0, 2, 1, 3).flatten(start_dim=-2))
         return x + self.ffn(torch.cat([x, message], -1))
 
 
@@ -189,13 +189,13 @@ class CrossBlock(nn.Module):
         qk0, qk1 = self.map_(self.to_qk, x0, x1)
         v0, v1 = self.map_(self.to_v, x0, x1)
         qk0, qk1, v0, v1 = map(
-            lambda t: t.unflatten(-1, (self.heads, -1)).transpose(1, 2),
+            lambda t: t.unflatten(-1, (self.heads, -1)).permute(0, 2, 1, 3),
             (qk0, qk1, v0, v1),
         )
         if self.flash is not None and qk0.device.type == "cuda":
             m0 = self.flash(qk0, qk1, v1, mask)
             m1 = self.flash(
-                qk1, qk0, v0, mask.transpose(-1, -2) if mask is not None else None
+                qk1, qk0, v0, mask.permute(0, 1, 3, 2) if mask is not None else None
             )
         else:
             qk0, qk1 = qk0 * self.scale**0.5, qk1 * self.scale**0.5
@@ -203,12 +203,12 @@ class CrossBlock(nn.Module):
             if mask is not None:
                 sim = sim.masked_fill(~mask, -float("inf"))
             attn01 = F.softmax(sim, dim=-1)
-            attn10 = F.softmax(sim.transpose(-2, -1).contiguous(), dim=-1)
+            attn10 = F.softmax(sim.permute(0, 1, 3, 2).contiguous(), dim=-1)
             m0 = torch.einsum("bhij, bhjd -> bhid", attn01, v1)
-            m1 = torch.einsum("bhji, bhjd -> bhid", attn10.transpose(-2, -1), v0)
+            m1 = torch.einsum("bhji, bhjd -> bhid", attn10.permute(0, 1, 3, 2), v0)
             if mask is not None:
                 m0, m1 = m0.nan_to_num(), m1.nan_to_num()
-        m0, m1 = self.map_(lambda t: t.transpose(1, 2).flatten(start_dim=-2), m0, m1)
+        m0, m1 = self.map_(lambda t: t.permute(0, 2, 1, 3).flatten(start_dim=-2), m0, m1)
         m0, m1 = self.map_(self.to_out, m0, m1)
         x0 = x0 + self.ffn(torch.cat([x0, m0], -1))
         x1 = x1 + self.ffn(torch.cat([x1, m1], -1))
@@ -239,9 +239,9 @@ class TransformerLayer(nn.Module):
 
     # This part is compiled and allows padding inputs
     def masked_forward(self, desc0, desc1, encoding0, encoding1, mask0, mask1):
-        mask = mask0 & mask1.transpose(-1, -2)
-        mask0 = mask0 & mask0.transpose(-1, -2)
-        mask1 = mask1 & mask1.transpose(-1, -2)
+        mask = mask0 & mask1.permute(0, 1, 3, 2)
+        mask0 = mask0 & mask0.permute(0, 1, 3, 2)
+        mask1 = mask1 & mask1.permute(0, 1, 3, 2)
         desc0 = self.self_attn(desc0, encoding0, mask0)
         desc1 = self.self_attn(desc1, encoding1, mask1)
         return self.cross_attn(desc0, desc1, mask)
@@ -252,13 +252,13 @@ def sigmoid_log_double_softmax(
 ) -> torch.Tensor:
     """create the log assignment matrix from logits and similarity"""
     b, m, n = sim.shape
-    certainties = F.logsigmoid(z0) + F.logsigmoid(z1).transpose(1, 2)
+    certainties = F.logsigmoid(z0) + F.logsigmoid(z1).permute(0, 2, 1)
     scores0 = F.log_softmax(sim, 2)
-    scores1 = F.log_softmax(sim.transpose(-1, -2).contiguous(), 2).transpose(-1, -2)
+    scores1 = F.log_softmax(sim.permute(0, 2, 1).contiguous(), 2).permute(0, 2, 1)
     scores = sim.new_full((b, m + 1, n + 1), 0)
     scores[:, :m, :n] = scores0 + scores1 + certainties
-    scores[:, :-1, -1] = F.logsigmoid(-z0.squeeze(-1))
-    scores[:, -1, :-1] = F.logsigmoid(-z1.squeeze(-1))
+    scores[:, :-1, -1] = F.logsigmoid(-z0[..., 0])
+    scores[:, -1, :-1] = F.logsigmoid(-z1[..., 0])
     return scores
 
 
@@ -281,7 +281,7 @@ class MatchAssignment(nn.Module):
         return scores, sim
 
     def get_matchability(self, desc: torch.Tensor):
-        return torch.sigmoid(self.matchability(desc)).squeeze(-1)
+        return torch.sigmoid(self.matchability(desc))[..., 0]
 
 
 def filter_matches(scores: torch.Tensor, th: float):
