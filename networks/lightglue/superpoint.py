@@ -82,15 +82,11 @@ def simple_nms(scores, radius):
 
 
 def top_k_keypoints(keypoints, scores, k):
-    if k >= len(keypoints):
-        return keypoints, scores
     scores, indices = torch.topk(scores, k, dim=0, sorted=True)
     return keypoints[indices], scores
 
 
 def sample_k_keypoints(keypoints, scores, k):
-    if k >= len(keypoints):
-        return keypoints, scores
     indices = torch.multinomial(scores, k, replacement=False)
     return keypoints[indices], scores[indices]
 
@@ -251,14 +247,10 @@ class SuperPoint(BaseModel):
             if self.conf.remove_borders:
                 scores[:, : self.conf.remove_borders] = -1
                 scores[:, :, : self.conf.remove_borders] = -1
-                if "image_size" in data:
-                    for i in range(scores.shape[0]):
-                        w, h = data["image_size"][i]
-                        scores[i, int(h.item()) - self.conf.remove_borders :] = -1
-                        scores[i, :, int(w.item()) - self.conf.remove_borders :] = -1
-                else:
-                    scores[:, -self.conf.remove_borders :] = -1
-                    scores[:, :, -self.conf.remove_borders :] = -1
+                # Use scores shape directly (matches image size after upsampling) to avoid .item() calls
+                h, w = scores.shape[1], scores.shape[2]
+                scores[:, h - self.conf.remove_borders :] = -1
+                scores[:, :, w - self.conf.remove_borders :] = -1
 
             # Extract keypoints
             best_kp = torch.where(scores > self.conf.detection_threshold)
@@ -310,14 +302,10 @@ class SuperPoint(BaseModel):
 
             if self.conf.force_num_keypoints:
                 # Calculate bounds safely to avoid negative tensor shapes in ONNX
-                image_size = data.get("image_size", torch.tensor(image.shape[-2:]))
-                if isinstance(image_size, torch.Tensor) and image_size.numel() > 0:
-                    # Ensure bounds are positive and valid
-                    min_size = image_size.min().item()
-                    max_bound = max(min_size, 1)  # Ensure at least 1
-                else:
-                    # Fallback to image dimensions
-                    max_bound = max(image.shape[-2:])
+                # Use image shape directly (Python ints) to avoid .item() during export
+                # This is the most export-compatible approach
+                image_shape = image.shape[-2:]  # (H, W) as Python ints
+                max_bound = max(image_shape)
                 
                 # Additional safety check for ONNX compatibility
                 if max_bound <= 0:
